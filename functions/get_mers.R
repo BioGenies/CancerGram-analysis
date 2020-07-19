@@ -5,7 +5,7 @@
 #' @return dataframe of mers with their source peptide and mer ID
 create_mer_df <- function(seq) 
   do.call(rbind, lapply(1L:nrow(seq), function(i) {
-    seq2ngrams(seq[i, ][!is.na(seq[i, ])], 10, a()[-1]) %>% 
+    seq2ngrams(seq[i, ][!is.na(seq[i, ])], 5, a()[-1]) %>% 
       decode_ngrams() %>% 
       unname() %>% 
       strsplit(split = "") %>% 
@@ -43,12 +43,9 @@ get_mers <- function(pos, pos_id, neg, neg_id) {
     ith_group %>% 
       list2matrix() %>% 
       create_mer_df %>% 
-      mutate(group = ith_group_id) %>% 
+      mutate(group = ith_group_id,
+             target = ifelse(grepl("CUTTED", source_peptide), FALSE, TRUE)) %>% 
       inner_join(fold_df, by = c("source_peptide" = "source_peptide"))
   }) %>% 
-    do.call(rbind, .) %>% 
-    mutate(target = grepl("AMP", source_peptide, fixed = TRUE)) %T>% {
-    print(paste0("Number of AMP mers: ", nrow(filter(target == TRUE))))
-    print(paste0("Number of non-AMP mers: ", nrow(filter(target == FALSE))))
-    }
+    do.call(rbind, .)
 }  

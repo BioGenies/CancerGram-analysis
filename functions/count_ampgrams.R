@@ -1,21 +1,18 @@
-count_ampgrams <- function(mer_df, ns, ds) {
-  
+count_ngrams <- function(mer_df, k, gaps) {
   mer_df[, grep("^X", colnames(mer_df))] %>% 
     as.matrix() %>% 
-    count_multigrams(ns = ns, 
-                     ds = ds,
-                     seq = .,
-                     u = toupper(colnames(aaprop))) %>% 
+    find_kmers(sequences = .,
+               k = k,
+               kmer_gaps = gaps,
+               alphabet = toupper(colnames(aaprop))) %>% 
     binarize
 }
 
-# count_ampgrams <- function(mer_df, ns, ds) {
-#   
-#   mer_df[, grep("^X", colnames(mer_df))] %>% 
-#     as.matrix() %>% 
-#     count_multigrams(ns = c(1, rep(2, 4), rep(3, 4)), 
-#                      ds = list(0, 0, 1, 2, 3, c(0, 0), c(0, 1), c(1, 0), c(1, 1)),
-#                      seq = .,
-#                      u = toupper(colnames(aaprop))) %>% 
-#     binarize
-# }
+
+count_and_gather_ngrams <- function(mer_df, k_list, gap_list) {
+  mapply(function(k, gap) {
+    count_ngrams(mer_df, k, gap)
+  }, k = k_list, gap = gap_list, SIMPLIFY = FALSE) %>% 
+    do.call(cbind, .)
+}
+

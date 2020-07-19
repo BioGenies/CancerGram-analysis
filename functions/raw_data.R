@@ -1,3 +1,32 @@
+#' Gathers ACP sequences from different databases
+#' 
+#' This function gathers ACP sequences from CancerPPD (containing standard
+#' amino acids and with L-stereochemistry), APD3 and DRAMP (anticancer and
+#' antitumor) and saves them in the fasta format.
+gather_raw_data <- function() {
+  cancerppd <- read.delim("./data/cancerppd_l_natural.txt", stringsAsFactors = FALSE) %>% 
+    na.omit() %>% 
+    mutate(id = paste0("CancerPPD_", id)) %>% 
+    select(c(id, Sequence))
+  
+  apd <- read.csv("./data/apd_df.csv", stringsAsFactors = FALSE) 
+  apd_apc <- apd[grepl("Cancer cells", apd[["Activity"]]), ] %>% 
+    mutate(id = `APD.ID`) %>% 
+    select(c("id", "Sequence"))
+  
+  dramp <- bind_rows(read.csv("./data/DRAMP_Anticancer_amps.csv", stringsAsFactors = FALSE),
+                     read.csv("./data/DRAMP_Antitumor_amps.csv", stringsAsFactors = FALSE)) %>% 
+    mutate(id = DRAMP_ID) %>% 
+    select(c("id", "Sequence"))
+  
+  all_seqs <- bind_rows(cancerppd, apd_apc, dramp) %>% 
+    mutate(Sequence = strsplit(as.character(Sequence), ""))
+  
+  write.fasta(sequences = all_seqs[["Sequence"]], 
+              names = all_seqs[["id"]],
+              file.out = "./data/all_ACPs.fasta")
+}
+
 #' Reads in the raw AMP sequences for analysis
 #' 
 #' Reads in AMP sequences from the dbAMP database and extracts those

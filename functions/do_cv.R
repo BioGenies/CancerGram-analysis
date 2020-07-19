@@ -23,8 +23,8 @@ string2list <- function(x) {
 
 
 do_cv <- function(mer_df, binary_ngrams) {
-  possible_groups <- sort_group(unique(mer_df[["group"]]))[1L:2]
-  group_combs <- list(possible_groups[1], possible_groups[2], c(possible_groups))
+  possible_groups <- sort_group(unique(mer_df[["group"]]))
+  group_combs <- list(possible_groups[1:2], possible_groups[1:3], possible_groups[1:4], c(possible_groups))
   lapply(group_combs, function(ith_group) {
     lapply(unique(mer_df[["fold"]]), function(ith_fold) {
       print(paste0(ith_group, "|", ith_fold))
@@ -41,18 +41,19 @@ do_cv <- function(mer_df, binary_ngrams) {
                                                                 mer_df[["fold"]] != ith_fold, imp_bigrams]),
                                       tar = as.factor(train_dat[["target"]]))
       model_cv <- ranger(dependent.variable.name = "tar", data =  ranger_train_data, 
-                         write.forest = TRUE, probability = TRUE, num.trees = 2000, 
+                         write.forest = TRUE, probability = TRUE, num.trees = 500, 
                          verbose = FALSE)
       
       preds <- mutate(test_dat,
                       pred = predict(model_cv, 
-                                     data.frame(as.matrix(binary_ngrams[mer_df[["fold"]] == ith_fold, imp_bigrams])))[["predictions"]][, "TRUE"])
+                                     data.frame(as.matrix(binary_ngrams[mer_df[["fold"]] == ith_fold, imp_bigrams])))[["predictions"]][, "TRUE"],
+                      comb = paste(ith_group, collapse = ","))
       
       # single mer predictions
       #HMeasure(preds[["target"]], preds[["pred"]])[["metrics"]]
       
       preds[, c("source_peptide", "mer_id", "group", 
-                "fold", "target", "pred")] 
+                "fold", "target", "pred", "comb")] 
     }) %>% bind_rows()
   }) %>% bind_rows()
 }
