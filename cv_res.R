@@ -2,6 +2,10 @@ library(dplyr)
 library(ggplot2)
 library(drake)
 
+source("functions/do_cv.R")
+
+cv_raw <- readRDS("cv_raw.RDS")
+
 perf_res <- lapply(unique(cv_raw[["comb"]]), function(ith_comb) 
   lapply(1L:5, function(ith_fold) 
     lapply(unique(cv_raw[["group"]]), function(ith_group) {
@@ -25,7 +29,7 @@ perf_res <- lapply(unique(cv_raw[["comb"]]), function(ith_comb)
   mutate(group = factor(group, levels = sort_group(unique(group))))
 
 
-ggplot(perf_res, aes(x = comb, y = AUC)) +
+ggplot(perf_res, aes(x = group, y = AUC)) +
   geom_point() +
   stat_summary(fun = mean, geom = "point", size = 4, color = "red") +
-  facet_wrap(~group, nrow = 1)
+  facet_wrap(~ comb, nrow = 1)
