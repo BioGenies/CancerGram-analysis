@@ -95,5 +95,5 @@ result <- mapply(function(set, cutoff, name) {
   get_metrics(set, cutoff, name)
 }, set = datasets, cutoff = cutoffs, name = dataset_names)
 
-saveRDS(main_preds, "main_dataset_preds.RDS")
-saveRDS(alt_preds, "alt_dataset_preds.RDS")
+saveRDS(main_preds, "./results/main_dataset_preds.RDS")
+saveRDS(alt_preds, "./results/alt_dataset_preds.RDS")
