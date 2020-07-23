@@ -1,6 +1,8 @@
 library(dplyr)
 library(ggplot2)
 library(drake)
+library(biogram)
+library(tidyr)
 
 loadd(cdhit_data)
 loadd(negative_data)
@@ -27,14 +29,15 @@ aac <- lapply(1:length(datasets), function(i) {
 ggplot(aac, aes(x = aa, y = freq, fill = dataset)) +
   geom_col(position = "dodge")
 
-apd_raw <- read.csv("./data/apd_df.csv", stringsAsFactors = FALSE)
+#apd_raw <- read.csv("./data/apd_df.csv", stringsAsFactors = FALSE)
 
-library(biogram)
+#AMP <- strsplit(apd_raw[!grepl("cancer", apd_raw[["Activity"]], ignore.case = TRUE), c("Sequence")], "")
 
-AMP <- strsplit(apd_raw[!grepl("cancer", apd_raw[["Activity"]], ignore.case = TRUE), c("Sequence")], "")
-nAMP_nANC <- biogram::read_fasta("./data/nonAMP_nonACP.fasta")
 ANC <- cdhit_data
-
+AmpGram_data <- readd(cdhit_data, path = "/home/kasia/RProjects/AmpGram-analysis/.drake")
+AMP <- AmpGram_data[which(!(AmpGram_data %in% ANC))]
+nAMP_nANC <- readd(negative_data)
+  
 seq_list <- list(AMP = AMP, nAMP_nANC = nAMP_nANC, ANC = ANC)
 
 prop_vec <- c(charge = "KLEP840101", 
@@ -62,14 +65,13 @@ ggplot(prop_dat, aes(x = seq_type, y = value)) +
   geom_boxplot() +
   facet_wrap(~prop_type, scales = "free_y")
 
-
-
-
-
-
-
-
-
-
+filter(prop_dat, prop_type %in% c("charge", "hydrophobicity")) %>% 
+  group_by(prop_type) %>% 
+  mutate(row = row_number()) %>% 
+  pivot_wider(names_from = prop_type, values_from = value) %>% 
+  ggplot(aes(x = charge, y = hydrophobicity, color = seq_type, fill = seq_type)) +
+#  geom_density2d(aes(alpha = ..level..))
+  stat_density_2d(aes(alpha = ..level..), geom = "polygon", color = "black", size = 0.4) +
+  facet_wrap(~seq_type)
 
 
