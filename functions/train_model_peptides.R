@@ -22,7 +22,7 @@ calculate_statistics <- function(pred_mers) {
               pred_min = min(pred),
               pred_max = max(pred), 
               longest_pos = max(count_longest(pred)),
-              n_pos_10 = sum(count_longest(pred) >= 10),
+              n_pos_5 = sum(count_longest(pred) >= 5),
               frac_0_0.2 = sum(pred <= 0.2)/n(),
               frac_0.2_0.4 = sum(pred > 0.2 & pred <= 0.4)/n(),
               frac_0.4_0.6 = sum(pred > 0.4 & pred <= 0.6)/n(),

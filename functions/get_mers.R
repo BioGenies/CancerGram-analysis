@@ -38,6 +38,7 @@ get_mers <- function(pos, pos_id, neg, neg_id) {
     folded <- cvFolds(length(ith_group), K = 5)
     fold_df <- data.frame(source_peptide = names(ith_group)[folded[["subsets"]]], 
                           fold = folded[["which"]],
+                          group = ith_group,
                           stringsAsFactors = FALSE)
     
     ith_group %>% 
@@ -49,3 +50,21 @@ get_mers <- function(pos, pos_id, neg, neg_id) {
   }) %>% 
     do.call(rbind, .)
 }  
+
+
+mer_df_from_list <- function(seq_list) {
+  seq_list %>% 
+    list2matrix() %>% 
+    create_mer_df() 
+}
+
+
+mer_df_from_list_len_group <- function(seq_list) {
+  lens <- data.frame(source_peptide = names(seq_list),
+                     len_group = cut(lengths(seq_list),
+                               breaks = c(5, 13, 17, 22, 28, 50),
+                               include.lowest = TRUE)) 
+  left_join(mer_df_from_list(seq_list),
+            lens, 
+            by = "source_peptide")
+}

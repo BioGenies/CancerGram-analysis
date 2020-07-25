@@ -10,9 +10,11 @@ count_ngrams <- function(mer_df, k, gaps) {
 
 
 count_and_gather_ngrams <- function(mer_df, k_list, gap_list) {
-  mapply(function(k, gap) {
+  res <- mapply(function(k, gap) {
     count_ngrams(mer_df, k, gap)
   }, k = k_list, gap = gap_list, SIMPLIFY = FALSE) %>% 
     do.call(cbind, .)
+  colnames(res)[which(nchar(colnames(res)) == 1)] <- paste0(colnames(res)[which(nchar(colnames(res)) == 1)], "_0")
+  res
 }
 
