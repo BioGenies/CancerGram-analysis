@@ -15,6 +15,8 @@ source("./functions/mc_model_functions.R")
 source("./functions/writing_benchmarks.R")
 source("./functions/train_model_peptides.R")
 
+loadd(cdhit_data)
+loadd(negative_data)
 
 benchmark_first_models <- drake_plan(
   # AntiCP datasets
@@ -154,6 +156,8 @@ benchmark_first_models <- drake_plan(
   benchmark_peptide_preds_acp_amp_anticp = cbind(benchmark_stats_acp_amp_anticp[, c("source_peptide", "target")],
                                           predict(peptide_model_acp_amp_anticp, benchmark_stats_acp_amp_anticp)[["predictions"]][, "TRUE"])
   )
+
+make(benchmark_first_models, seed = 2938)
 
 # saveRDS(main_preds, "./results/main_dataset_preds.RDS")
 # saveRDS(alt_preds, "./results/alt_dataset_preds.RDS")

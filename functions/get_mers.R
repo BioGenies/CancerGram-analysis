@@ -38,7 +38,6 @@ get_mers <- function(pos, pos_id, neg, neg_id) {
     folded <- cvFolds(length(ith_group), K = 5)
     fold_df <- data.frame(source_peptide = names(ith_group)[folded[["subsets"]]], 
                           fold = folded[["which"]],
-                          group = ith_group,
                           stringsAsFactors = FALSE)
     
     ith_group %>% 

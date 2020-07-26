@@ -40,7 +40,7 @@ get_single_seq_mers <- function(seq) {
 
 train_and_test_anticp <- function(pos_train, neg_train, pos_test, neg_test) {
   
-  lapply(list(pos_train, neg_train, pos_test, neg_test), function(ith_set) {
+  mer_df <- lapply(list(pos_train, neg_train, pos_test, neg_test), function(ith_set) {
     mer_df_from_list(ith_set) %>% 
       mutate(target = ifelse(grepl("pos", source_peptide), "TRUE", "FALSE"),
              dataset = ifelse(grepl("train", source_peptide), "train", "test")) 
