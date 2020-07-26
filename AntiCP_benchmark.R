@@ -6,6 +6,7 @@ library(ranger)
 library(ggplot2)
 library(tidyr)
 library(cvTools)
+library(measures)
 
 source("./functions/get_mers.R")
 source("./functions/count_ampgrams.R")
@@ -86,7 +87,7 @@ benchmark_first_models <- drake_plan(
                                                       data.frame(as.matrix(benchmark_ngrams_acp_neg[, imp_ngrams_acp_neg])))[["predictions"]][, "TRUE"]),
   benchmark_stats_acp_neg = calculate_statistics(benchmark_mer_preds_acp_neg),
   benchmark_peptide_preds_acp_neg = cbind(benchmark_stats_acp_neg[, c("source_peptide", "target")],
-                                          predict(peptide_model_acp_neg, benchmark_stats_acp_neg)[["predictions"]][, "TRUE"]),
+                                          pred = predict(peptide_model_acp_neg, benchmark_stats_acp_neg)[["predictions"]][, "TRUE"]),
   
   # ACP/AMP our datasets
   mers_acp_amp = mutate(filter(mers_mc, target %in% c("acp", "amp")),
@@ -108,7 +109,7 @@ benchmark_first_models <- drake_plan(
                                                       data.frame(as.matrix(benchmark_ngrams_acp_amp[, imp_ngrams_acp_amp])))[["predictions"]][, "TRUE"]),
   benchmark_stats_acp_amp = calculate_statistics(benchmark_mer_preds_acp_amp),
   benchmark_peptide_preds_acp_amp = cbind(benchmark_stats_acp_amp[, c("source_peptide", "target")],
-                                          predict(peptide_model_acp_amp, benchmark_stats_acp_amp)[["predictions"]][, "TRUE"]),
+                                          pred = predict(peptide_model_acp_amp, benchmark_stats_acp_amp)[["predictions"]][, "TRUE"]),
   
   # ACP/non-ACP AntiCP datasets
   mers_acp_neg_anticp = mutate(mer_df_from_list_len_group(c(pos_train_alt, neg_train_alt)),
@@ -131,7 +132,7 @@ benchmark_first_models <- drake_plan(
                                                              data.frame(as.matrix(benchmark_ngrams_acp_neg_anticp[, imp_ngrams_acp_neg_anticp])))[["predictions"]][, "TRUE"]),
   benchmark_stats_acp_neg_anticp = calculate_statistics(benchmark_mer_preds_acp_neg_anticp),
   benchmark_peptide_preds_acp_neg_anticp = cbind(benchmark_stats_acp_neg_anticp[, c("source_peptide", "target")],
-                                                 predict(peptide_model_acp_neg_anticp, benchmark_stats_acp_neg_anticp)[["predictions"]][, "TRUE"]),
+                                                 pred = predict(peptide_model_acp_neg_anticp, benchmark_stats_acp_neg_anticp)[["predictions"]][, "TRUE"]),
   
   # ACP/AMP AntiCP datasets
   mers_acp_amp_anticp = mutate(mer_df_from_list_len_group(c(pos_train_main, neg_train_main)),
@@ -154,7 +155,7 @@ benchmark_first_models <- drake_plan(
                                                       data.frame(as.matrix(benchmark_ngrams_acp_amp_anticp[, imp_ngrams_acp_amp_anticp])))[["predictions"]][, "TRUE"]),
   benchmark_stats_acp_amp_anticp = calculate_statistics(benchmark_mer_preds_acp_amp_anticp),
   benchmark_peptide_preds_acp_amp_anticp = cbind(benchmark_stats_acp_amp_anticp[, c("source_peptide", "target")],
-                                          predict(peptide_model_acp_amp_anticp, benchmark_stats_acp_amp_anticp)[["predictions"]][, "TRUE"])
+                                          pred = predict(peptide_model_acp_amp_anticp, benchmark_stats_acp_amp_anticp)[["predictions"]][, "TRUE"])
   )
 
 make(benchmark_first_models, seed = 2938)
@@ -169,8 +170,39 @@ make(benchmark_first_models, seed = 2938)
 #   ggplot(aes(x = factor(target), y = frac_true)) +
 #   geom_boxplot()
 
-# 
-# ANC <- cdhit_data
-# AmpGram_data <- readd(cdhit_data, path = "/home/kasia/RProjects/AmpGram-analysis/.drake")
-# AMP <- AmpGram_data[which(!(AmpGram_data %in% ANC))]
+### Performance measures
 
+mc <- readd(benchmark_peptide_preds_mc)
+acp_neg <- readd(benchmark_peptide_preds_acp_neg)
+acp_amp <- readd(benchmark_peptide_preds_acp_amp)
+acp_neg_anticp <- readd(benchmark_peptide_preds_acp_neg_anticp)
+acp_amp_anticp <- readd(benchmark_peptide_preds_acp_amp_anticp)
+
+res_list <- list("acp_neg" = acp_neg, "acp_amp" = acp_amp, "acp_neg_anticp" = acp_neg_anticp, "acp_amp_anticp" = acp_amp_anticp)
+
+all_res <- lapply(1:length(res_list), function(i) {
+  mutate(res_list[[i]], model = names(res_list)[i])
+}) %>% bind_rows()
+
+
+mutate(all_res, target = factor(target),
+       decision = factor(ifelse(pred > 0.5, TRUE, FALSE))) %>% 
+  group_by(model) %>% 
+  summarise(MCC = mlr3measures::mcc(target, decision, "TRUE"),
+           Precision = mlr3measures::precision(target, decision, "TRUE"),
+           Sensitivity = mlr3measures::sensitivity(target, decision, "TRUE"),
+           Specificity = mlr3measures::specificity(target, decision, "TRUE"),
+           Accuracy = mlr3measures::acc(target, decision),
+           AUC = mlr3measures::auc(target, pred, "TRUE")) 
+
+# Multiclass model
+multiclass.AUNP(mc[, c("acp", "amp", "neg")], mc[["target"]])
+multiclass.AU1U(mc[, c("acp", "amp", "neg")], mc[["target"]])
+multiclass.AUNU(mc[, c("acp", "amp", "neg")], mc[["target"]])
+
+mc_decisions <- mutate(mc, decision = case_when(acp > amp & acp > neg  ~ "acp",
+                                                amp > acp & amp > neg ~ "amp",
+                                                neg > amp & neg > acp ~ "neg"))
+
+ACC(mc_decisions[["target"]], mc_decisions[["decision"]])
+table(mc_decisions[,c(2,6)])
