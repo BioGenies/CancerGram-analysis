@@ -1,20 +1,16 @@
-calc_imp_bigrams <- function(train_mer_df, train_binary_ngrams, train_groups, cutoff = 0.05) {
-  train_dat <- filter(train_mer_df, group %in% train_groups)
-  test_bis <- test_features(train_dat[["target"]],
-                            train_binary_ngrams[train_mer_df[["group"]] %in% train_groups, ])
+calc_imp_bigrams <- function(train_mer_df, train_binary_ngrams, cutoff = 0.05) {
+  test_bis <- test_features(train_mer_df[["target"]], train_binary_ngrams)
   imp_bigrams <- cut(test_bis, breaks = c(0, cutoff, 1))[[1]]
   imp_bigrams
 }
 
-train_model_mers <- function(train_mer_df, train_groups, train_binary_ngrams, imp_bigrams) {
-  train_dat <- filter(train_mer_df, group %in% train_groups)
-  ranger_train_data <- data.frame(as.matrix(train_binary_ngrams[train_mer_df[["group"]] %in% train_groups, imp_bigrams]),
-                                  tar = as.factor(train_dat[["target"]]))
-  
-  model_full_alphabet <- ranger(dependent.variable.name = "tar", data = ranger_train_data, 
+train_model_mers <- function(train_mer_df, train_binary_ngrams, imp_bigrams) {
+  ranger_train_data <- data.frame(as.matrix(train_binary_ngrams[, imp_bigrams]),
+                                  tar = as.factor(train_mer_df[["target"]]))
+  model_mer <- ranger(dependent.variable.name = "tar", data = ranger_train_data, 
                                 write.forest = TRUE, probability = TRUE, num.trees = 2000, 
-                                verbose = FALSE, seed = 990)
-  model_full_alphabet
+                                verbose = FALSE)
+  model_mer
 }
 
 sort_group <- function(x) {

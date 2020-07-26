@@ -9,6 +9,9 @@ count_longest <- function(x) {
 }
 
 calculate_statistics <- function(pred_mers) {
+  if(!("target" %in% colnames(pred_mers))) {
+    pred_mers <- mutate(pred_mers, target = ifelse(grepl("CancerPPD|AP|DRAMP", source_peptide), TRUE, FALSE))
+  }
   (if("fold" %in% colnames(pred_mers)) {
     group_by(pred_mers, source_peptide, target, fold)
   } else {  
@@ -36,7 +39,7 @@ train_model_peptides <- function(mer_statistics) {
   train_dat <- mer_statistics %>% 
     select(c("target", "fraction_true", "pred_mean", "pred_median",
              "n_peptide", "n_pos", "pred_min", "pred_max", "longest_pos",
-             "n_pos_10", "frac_0_0.2", "frac_0.2_0.4", "frac_0.4_0.6",
+             "n_pos_5", "frac_0_0.2", "frac_0.2_0.4", "frac_0.4_0.6",
              "frac_0.6_0.8", "frac_0.8_1"))
   model_cv <- ranger(dependent.variable.name = "target", data = train_dat, 
                      write.forest = TRUE, probability = TRUE, num.trees = 500, 
