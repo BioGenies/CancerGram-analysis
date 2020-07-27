@@ -35,7 +35,8 @@ benchmark_first_models <- drake_plan(
   anticp_data_pred_metrics = mapply(function(set, cutoff, name) get_metrics(set, cutoff, name), set = list(main_preds, alt_preds), 
                                     cutoff = c(rep(0.5, 2), rep(0.7, 2), rep(0.9, 2)), 
                                     name = c("main", "alt")),
-  # Multiclass model mers+peptides
+  
+  # Multiclass model mers+peptides our datasets
   acp = readd(cdhit_data),
   amp = filter_amps(amp_full_dataset = readd(cdhit_data, path = "/home/kasia/RProjects/AmpGram-analysis/.drake"),
                     acp_dataset = acp),
@@ -66,6 +67,36 @@ benchmark_first_models <- drake_plan(
   benchmark_peptide_preds_mc = cbind(benchmark_stats_mc[, c("source_peptide", "target")],
                                      predict(peptide_model_mc,
                                        select(benchmark_stats_mc, -source_peptide))[["predictions"]]),
+  
+  # Multiclass model on AntiCP datasets
+  mers_mc_anticp = mutate(mer_df_from_list_len_group(c(pos_train_main, neg_train_main, neg_train_alt)),
+                               target = case_when(grepl("pos_train_main", source_peptide) ~ "acp",
+                                                  grepl("neg_train_main", source_peptide) ~ "amp",
+                                                  grepl("neg_train_alternate", source_peptide) ~ "neg")),
+  ngrams_mc_anticp = count_and_gather_ngrams(mers_mc_anticp,
+                                      c(1, rep(2, 4), rep(3, 4)),
+                                      list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
+  imp_ngrams_dat_mc_anticp = get_imp_ngrams_mc(ngrams_mc_anticp, mers_mc_anticp),
+  imp_ngrams_mc_anticp = unique(unlist(unname(imp_ngrams_dat_mc_anticp))),
+  mer_model_mc_anticp = train_mc_model_mers(mers_mc_anticp, ngrams_mc_anticp, imp_ngrams_mc_anticp),
+  mer_preds_mc_anticp = cbind(mers_mc_anticp, predict(mer_model_mc_anticp, as.matrix(ngrams_mc_anticp[, imp_ngrams_mc_anticp]))[["predictions"]]),
+  stats_mc_anticp = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
+    calculate_statistics_single(mer_preds_mc_anticp, i)))[,-c(17,18,33,34)],
+  peptide_model_mc_anticp = train_mc_model_peptides(stats_mc_anticp),
+  benchmark_mers_mc_anticp = mutate(mer_df_from_list_len_group(c(pos_test_main, neg_test_main, neg_test_alt)),
+                                    target = case_when(grepl("pos_train_main", source_peptide) ~ "acp",
+                                                       grepl("neg_train_main", source_peptide) ~ "amp",
+                                                       grepl("neg_train_alternate", source_peptide) ~ "neg")),
+  benchmark_ngrams_mc_anticp = count_imp_ngrams(benchmark_mers_mc_anticp, imp_ngrams_mc_anticp),
+  benchmark_mer_preds_mc_anticp = cbind(benchmark_mers_mc_anticp, 
+                                 predict(mer_model_mc_anticp, 
+                                         as.matrix(benchmark_ngrams_mc_anticp))[["predictions"]]),
+  benchmark_stats_mc_anticp = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
+    calculate_statistics_single(benchmark_mer_preds_mc_anticp, i)))[,-c(17,18,33,34)],
+  benchmark_peptide_preds_mc_anticp = cbind(benchmark_stats_mc_anticp[, c("source_peptide", "target")],
+                                     predict(peptide_model_mc_anticp,
+                                             select(benchmark_stats_mc_anticp, -source_peptide))[["predictions"]]),
+  
   ### Binary models mers + peptides 
   # ACP/non-ACP our datasets
   mers_acp_neg = mutate(filter(mers_mc, target %in% c("acp", "neg")),
@@ -173,6 +204,7 @@ make(benchmark_first_models, seed = 2938)
 ### Performance measures
 
 mc <- readd(benchmark_peptide_preds_mc)
+mc_anticp <- readd(benchmark_peptide_preds_mc_anticp)
 acp_neg <- readd(benchmark_peptide_preds_acp_neg)
 acp_amp <- readd(benchmark_peptide_preds_acp_amp)
 acp_neg_anticp <- readd(benchmark_peptide_preds_acp_neg_anticp)
@@ -190,9 +222,9 @@ mutate(all_res, target = factor(target),
   group_by(model) %>% 
   summarise(MCC = mlr3measures::mcc(target, decision, "TRUE"),
            Precision = mlr3measures::precision(target, decision, "TRUE"),
-           Sensitivity = mlr3measures::sensitivity(target, decision, "TRUE"),
-           Specificity = mlr3measures::specificity(target, decision, "TRUE"),
-           Accuracy = mlr3measures::acc(target, decision),
+           Sensitivity = mlr3measures::sensitivity(target, decision, "TRUE")*100,
+           Specificity = mlr3measures::specificity(target, decision, "TRUE")*100,
+           Accuracy = mlr3measures::acc(target, decision)*100,
            AUC = mlr3measures::auc(target, pred, "TRUE")) 
 
 # Multiclass model

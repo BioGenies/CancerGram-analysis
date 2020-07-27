@@ -88,7 +88,10 @@ calculate_statistics_single <- function(mer_preds, group) {
   if(!("target" %in% colnames(mer_preds))) {
     mer_preds <- mutate(mer_preds, target = case_when(grepl("CUTTED", source_peptide) ~ "neg",
                                                       grepl("dbAMP", source_peptide) ~ "amp",
-                                                      grepl("CancerPPD|AP|DRAMP", source_peptide) ~ "acp"))
+                                                      grepl("CancerPPD|AP|DRAMP", source_peptide) ~ "acp",
+                                                      grepl("pos_train_main", source_peptide) ~ "acp",
+                                                      grepl("neg_train_main", source_peptide) ~ "amp",
+                                                      grepl("neg_train_alternate", source_peptide) ~ "neg"))
   }
   mer_preds[c("source_peptide", "target", group)] %>% 
     setNames(c("source_peptide", "target", "pred")) %>% 
