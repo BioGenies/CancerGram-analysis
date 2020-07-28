@@ -36,7 +36,10 @@ get_mers_mc <- function(pos, pos_id, amp, amp_id, neg, neg_id) {
       mutate(group = ith_group_id,
              target = case_when(grepl("CUTTED", source_peptide) ~ "neg",
                                 grepl("dbAMP", source_peptide) ~ "amp",
-                                grepl("CancerPPD|AP|DRAMP", source_peptide) ~ "acp")) %>% 
+                                grepl("CancerPPD|AP|DRAMP", source_peptide) ~ "acp",
+                                grepl("pos_train_main", source_peptide) ~ "acp",
+                                grepl("neg_train_main", source_peptide) ~ "amp",
+                                grepl("neg_train_alternate", source_peptide) ~ "neg")) %>% 
       inner_join(fold_df, by = c("source_peptide" = "source_peptide"))
   }) %>% 
     do.call(rbind, .)

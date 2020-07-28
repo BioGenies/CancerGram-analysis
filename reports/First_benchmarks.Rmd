@@ -1,0 +1,131 @@
+---
+title: "CancerGram: Prediction of anticancer peptides"
+author: "Katarzyna Sidorczuk"
+date: "29.07.2020"
+output: 
+  revealjs::revealjs_presentation:
+    transition: none
+    theme: serif
+    css: style.css
+    reveal_options:
+      controls: false
+      progress: false
+      slideNumber: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(knitr)
+library(drake)
+library(dplyr)
+library(ggplot2)
+library(biogram)
+library(tidyr)
+acp <- readd(acp)
+amp <- readd(amp)
+neg <- readd(neg)
+benchmark_res <- read.csv("./data/benchmark_res.csv")
+```
+
+## CancerGram structure
+
+<img src="data/cancergram.png" width="600">
+
+## Three classes of peptides: ACP/AMP/negative
+
+```{r}
+datasets <- list("ACP" = acp, "AMP" = amp, "neg" = neg)
+aac <- lapply(1:length(datasets), function(i) {
+  data.frame(table(unlist(datasets[[i]]))) %>% 
+    setNames(c("aa", "freq")) %>% 
+    mutate(freq = freq/sum(freq),
+           dataset = factor(names(datasets[i]), levels = c("ACP", "AMP", "neg")))
+}) %>% bind_rows()
+
+ggplot(aac, aes(x = aa, y = freq, fill = dataset)) +
+  geom_col(position = "dodge")
+
+
+```
+
+
+## ACPs and AMPs have similar properties
+
+```{r}
+prop_vec <- c(charge = "KLEP840101", 
+              hydrophobicity = "KYTJ820101",
+              hydrophobcity_black = "BLAS910101",
+              positive = "FAUJ880111",
+              helix_eq = "FINA770101",
+              helix_prop = "KOEP990101")
+
+encode_seq <- function(x, property) {
+  sapply(x, function(ith_seq) {
+    mean(aaprop[property, tolower(ith_seq)])
+  })
+}
+
+prop_dat <- lapply(names(prop_vec), function(ith_prop_type) 
+  lapply(names(datasets), function(ith_seq_type) {
+    data.frame(seq_type = ith_seq_type, prop_type = ith_prop_type, 
+               value = encode_seq(datasets[[ith_seq_type]], prop_vec[ith_prop_type]),
+               stringsAsFactors = FALSE)
+  }) %>% bind_rows
+) %>% bind_rows()
+
+ggplot(prop_dat, aes(x = seq_type, y = value)) +
+  geom_boxplot() +
+  facet_wrap(~prop_type, scales = "free_y")
+```
+
+## ACPs and AMPs have similar properties
+
+```{r}
+filter(prop_dat, prop_type %in% c("charge", "hydrophobicity")) %>% 
+  group_by(prop_type) %>% 
+  mutate(row = row_number()) %>% 
+  pivot_wider(names_from = prop_type, values_from = value) %>% 
+  ggplot(aes(x = charge, y = hydrophobicity, color = seq_type, fill = seq_type)) +
+#  geom_density2d(aes(alpha = ..level..))
+  stat_density_2d(aes(alpha = ..level..), geom = "polygon", color = "black", size = 0.4) +
+  facet_wrap(~seq_type)
+
+```
+
+## Existing software: AntiCP 2.0 - two seperate models
+
+
+```{r}
+benchmark_res %>% 
+  group_by(Datasets) %>% 
+  filter(!(grepl("CancerGram", Software)) & Datasets == "ACP/AMP") %>% 
+           kable()
+```
+
+<br/>
+
+
+```{r}
+benchmark_res %>% 
+  group_by(Datasets) %>% 
+  filter(!(grepl("CancerGram", Software)) & Datasets == "ACP/neg") %>% 
+           kable()
+```
+
+
+## CancerGramMC - multiclass model
+```{r}
+benchmark_res %>% 
+  group_by(Datasets) %>% 
+  filter(Datasets == "ACP/AMP" & !(Software %in% c("CancerGram", "CancerGramMC"))) %>% 
+           kable()
+```
+
+<br/>
+
+```{r}
+benchmark_res %>% 
+  group_by(Datasets) %>% 
+  filter(Datasets == "ACP/neg" & !(Software %in% c("CancerGram", "CancerGramMC"))) %>% 
+           kable()
+```

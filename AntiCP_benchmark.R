@@ -84,9 +84,9 @@ benchmark_first_models <- drake_plan(
     calculate_statistics_single(mer_preds_mc_anticp, i)))[,-c(17,18,33,34)],
   peptide_model_mc_anticp = train_mc_model_peptides(stats_mc_anticp),
   benchmark_mers_mc_anticp = mutate(mer_df_from_list_len_group(c(pos_test_main, neg_test_main, neg_test_alt)),
-                                    target = case_when(grepl("pos_train_main", source_peptide) ~ "acp",
-                                                       grepl("neg_train_main", source_peptide) ~ "amp",
-                                                       grepl("neg_train_alternate", source_peptide) ~ "neg")),
+                                    target = case_when(grepl("pos_test_main", source_peptide) ~ "acp",
+                                                       grepl("neg_test_main", source_peptide) ~ "amp",
+                                                       grepl("neg_test_alternate", source_peptide) ~ "neg")),
   benchmark_ngrams_mc_anticp = count_imp_ngrams(benchmark_mers_mc_anticp, imp_ngrams_mc_anticp),
   benchmark_mer_preds_mc_anticp = cbind(benchmark_mers_mc_anticp, 
                                  predict(mer_model_mc_anticp, 
@@ -238,3 +238,27 @@ mc_decisions <- mutate(mc, decision = case_when(acp > amp & acp > neg  ~ "acp",
 
 ACC(mc_decisions[["target"]], mc_decisions[["decision"]])
 table(mc_decisions[,c(2,6)])
+
+
+
+all_res_mc <- bind_rows(mutate(mc, model = "mc"),
+                        mutate(mc_anticp, model = "mc_anticp")) %>% 
+  mutate(decision = factor(ifelse(acp > amp & acp > neg, "TRUE", "FALSE")))
+
+# Porównanie ACP/AMP
+filter(all_res_mc, grepl("AP|Cancer|DRAMP|dbAMP|test_main", source_peptide)) %>% 
+  mutate(target = factor(ifelse(grepl("AP|Cancer|DRAMP|pos_", source_peptide), TRUE, FALSE))) %>% 
+  group_by(model) %>% 
+  summarise(MCC = mlr3measures::mcc(target, decision, "TRUE"),
+            Sensitivity = mlr3measures::sensitivity(target, decision, "TRUE")*100,
+            Specificity = mlr3measures::specificity(target, decision, "TRUE")*100,
+            Accuracy = mlr3measures::acc(target, decision)*100)
+
+# Porównanie ACP/neg
+filter(all_res_mc, grepl("AP|Cancer|DRAMP|CUTTED|pos_test|test_alt", source_peptide)) %>% 
+  mutate(target = factor(ifelse(grepl("AP|Cancer|DRAMP|pos_", source_peptide), TRUE, FALSE))) %>% 
+  group_by(model) %>% 
+  summarise(MCC = mlr3measures::mcc(target, decision, "TRUE"),
+            Sensitivity = mlr3measures::sensitivity(target, decision, "TRUE")*100,
+            Specificity = mlr3measures::specificity(target, decision, "TRUE")*100,
+            Accuracy = mlr3measures::acc(target, decision)*100)
