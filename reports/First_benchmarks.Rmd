@@ -17,6 +17,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 library(knitr)
 library(drake)
+library(seqinr)
 library(dplyr)
 library(ggplot2)
 library(biogram)
@@ -112,6 +113,90 @@ ggplot(prop_dat, aes(x = seq_type, y = value, color = seq_type)) +
   theme_bw()
 ```
 
+## Physicochemical properties
+
+```{r}
+prop_df <- data.frame(nice_name = c("Charge",
+                                    "Positive residues",
+                                    "Helix equlibrium",
+                                    "Helix propensity",
+                                    "Hydrophobicity (Black)",
+                                    "Hydrophobicity (Kyte-Doolitle)"),
+                      row.names = c("KLEP840101", "FAUJ880111", 
+                                    "FINA770101", "KOEP990101", 
+                                    "BLAS910101", "KYTJ820101")
+)
+
+encode_seq <- function(x, property) {
+  sapply(x, function(ith_seq) {
+    mean(aaprop[property, tolower(ith_seq)])
+  })
+}
+
+prop_dat <- lapply(rownames(prop_df), function(ith_prop_type) 
+  lapply(names(datasets), function(ith_seq_type) {
+    data.frame(seq_type = ith_seq_type, prop_type = ith_prop_type, 
+               value = encode_seq(datasets[[ith_seq_type]], ith_prop_type),
+               stringsAsFactors = FALSE)
+  }) %>% bind_rows
+) %>% bind_rows() %>% 
+  mutate(prop_type = factor(prop_type, levels = rownames(prop_df)),
+         prop_type = factor(prop_type, 
+                            labels = prop_df[levels(prop_type), "nice_name"]))
+
+
+data(aaindex)
+id_vec <- sapply(aaindex, function(i) i[["H"]])
+
+
+data.frame(row.names = rownames(prop_df), 
+           property = sapply(rownames(prop_df), function(i) aaindex[[which(id_vec == i)]][["D"]])) %>% 
+  kable
+
+```
+
+## Physicochemical properties - charge
+
+```{r}
+do_prop_plot <- function(x) 
+  ggplot(x, aes(x = seq_type, y = value, color = seq_type)) +
+  geom_boxplot() +
+  scale_color_manual("Dataset", values = dataset_color) +
+  scale_x_discrete("Dataset") +
+  scale_y_continuous("Value") +
+  facet_wrap(~prop_type, scales = "free_y", ncol = 2) +
+  theme_bw()
+
+filter(prop_dat, prop_type %in% c("Charge", "Positive residues")) %>%
+  do_prop_plot
+```
+
+## Physicochemical properties - hydrophobicity
+
+```{r}
+filter(prop_dat, prop_type %in% c("Hydrophobicity (Black)", "Hydrophobicity (Kyte-Doolitle)")) %>%
+  do_prop_plot
+```
+
+## Physicochemical properties - helix propensity
+
+```{r}
+filter(prop_dat, prop_type %in% c("Helix equlibrium", "Helix propensity")) %>%
+  do_prop_plot
+```
+
+## Physicochemical properties - overall
+
+```{r}
+ggplot(prop_dat, aes(x = seq_type, y = value, color = seq_type)) +
+  geom_boxplot() +
+  scale_color_manual("Dataset", values = dataset_color) +
+  scale_x_discrete("Dataset") +
+  scale_y_continuous("Value") +
+  facet_wrap(~prop_type, scales = "free_y", ncol = 2) +
+  theme_bw()
+```
+
 ## ACPs and AMPs have similar properties
 
 ```{r}
@@ -124,12 +209,24 @@ filter(prop_dat,
   #  geom_density2d(aes(alpha = ..level..))
   stat_density_2d(aes(alpha = ..level..), geom = "polygon", color = "black", size = 0.4) +
   scale_fill_manual("Dataset", values = dataset_color) +
-  facet_wrap(~seq_type)
+  facet_wrap(~seq_type) +
+  theme_bw() +
+  theme(legend.position = "bottom")
 
 ```
 
 ## Existing software: AntiCP 2.0 - two separate models
 
+AntiCP 2.0 has two models: 
+
+1. discrimination between ACP and AMP
+2. discrimination between ACP and neg (non-AMP/non-ACP)
+
+<img src="./static_figures/anticp.png" width="700px">
+
+
+
+## Existing software: AntiCP 2.0 - two separate models
 
 ```{r}
 benchmark_res %>% 
