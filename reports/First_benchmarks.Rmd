@@ -1,6 +1,6 @@
 ---
 title: "CancerGram: Prediction of anticancer peptides"
-author: "Katarzyna Sidorczuk"
+author: "Katarzyna Sidorczuk, Michał Burdukiewicz"
 date: "29.07.2020"
 output: 
   revealjs::revealjs_presentation:
@@ -25,6 +25,9 @@ acp <- readd(acp)
 amp <- readd(amp)
 neg <- readd(neg)
 benchmark_res <- read.csv("./data/benchmark_res.csv")
+
+datasets <- list("ACP" = acp, "AMP" = amp, "neg" = neg)
+dataset_color = c(ACP = "#4575b4", AMP = "#e0f3f8", neg = "#d73027")
 ```
 
 ## CancerGram structure
@@ -33,8 +36,21 @@ benchmark_res <- read.csv("./data/benchmark_res.csv")
 
 ## Three classes of peptides: ACP/AMP/negative
 
+ - ACP: anticancer peptides
+ - AMP: antimicrobial peptides (presumably non-anticancer)
+ - negative (neg): peptides which are non-ACP and non-AMP
+
+```{r,results='asis'}
+data.frame(dataset = names(datasets), 
+           n = unname(lengths(datasets)),
+           avg_length = unname(sapply(lapply(datasets, lengths), mean))) %>% 
+  kable
+```
+
+
+## Three classes of peptides: ACP/AMP/negative
+
 ```{r}
-datasets <- list("ACP" = acp, "AMP" = amp, "neg" = neg)
 aac <- lapply(1:length(datasets), function(i) {
   data.frame(table(unlist(datasets[[i]]))) %>% 
     setNames(c("aa", "freq")) %>% 
@@ -43,7 +59,12 @@ aac <- lapply(1:length(datasets), function(i) {
 }) %>% bind_rows()
 
 ggplot(aac, aes(x = aa, y = freq, fill = dataset)) +
-  geom_col(position = "dodge")
+  geom_col(position = "dodge", color = "black") +
+  scale_x_discrete("Amino acid") +
+  scale_y_continuous("Frequency") +
+  scale_fill_manual("Dataset", values = dataset_color) +
+  theme_bw() +
+  theme(legend.position = "bottom")
 
 
 ```
