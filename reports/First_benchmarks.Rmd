@@ -225,13 +225,12 @@ AntiCP 2.0 has two models:
 <img src="./static_figures/anticp.png" width="700px">
 
 
-
-## Existing software: AntiCP 2.0 - two separate models
+## Approach 1: CancerGram as two models
 
 ```{r}
 benchmark_res %>% 
-  group_by(Datasets) %>% 
-  filter(!(grepl("CancerGram", Software)) & Datasets == "ACP/AMP") %>% 
+  filter(Datasets == "ACP/AMP") %>% 
+  filter(!(Software %in% c("CancerGram", "CancerGramMC", "CancerGramMC on AntiCP dataset"))) %>% 
   kable()
 ```
 
@@ -240,13 +239,50 @@ benchmark_res %>%
 
 ```{r}
 benchmark_res %>% 
-  group_by(Datasets) %>% 
-  filter(!(grepl("CancerGram", Software)) & Datasets == "ACP/neg") %>% 
+  filter(Datasets == "ACP/neg") %>% 
+  filter(!(Software %in% c("CancerGram", "CancerGramMC", "CancerGramMC on AntiCP dataset"))) %>% 
   kable()
 ```
 
+## Approach 1: CancerGram as two models
 
-## CancerGramMC - multiclass model
+```{r}
+benchmark_res %>%  
+  filter(!(Software %in% c("CancerGram", "CancerGramMC", 
+                           "CancerGramMC on AntiCP dataset"))) %>% 
+  mutate(CancerGram = grepl("CancerGram", Software),
+         Software = ifelse(CancerGram, "CancerGram", as.character(Software))) %>% 
+  pivot_longer(cols = c(Sensitivity, Specificity, Accuracy, MCC)) %>% 
+  filter(name != "MCC") %>% 
+  ggplot(aes(x = Software, y = value, fill = CancerGram)) +
+  geom_col() +
+  scale_fill_manual(values = c("grey", "red"), guide = FALSE) +
+  facet_grid(Datasets ~ name, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+## Approach 1: CancerGram as two models
+
+```{r}
+benchmark_res %>%  
+  filter(!(Software %in% c("CancerGram", "CancerGramMC", 
+                           "CancerGramMC on AntiCP dataset"))) %>% 
+  mutate(CancerGram = grepl("CancerGram", Software),
+         Software = ifelse(CancerGram, "CancerGram", as.character(Software))) %>% 
+  pivot_longer(cols = c(Sensitivity, Specificity, Accuracy, MCC)) %>% 
+  filter(name == "MCC") %>% 
+  ggplot(aes(x = Software, y = value, fill = CancerGram)) +
+  geom_col() +
+  scale_fill_manual(values = c("grey", "red"), guide = FALSE) +
+  facet_grid(Datasets ~ name, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+## Approach 2: CancerGram as a single model
+
 ```{r}
 benchmark_res %>% 
   group_by(Datasets) %>% 
