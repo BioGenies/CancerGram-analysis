@@ -298,3 +298,39 @@ benchmark_res %>%
   filter(Datasets == "ACP/neg" & !(Software %in% c("CancerGram", "CancerGramMC"))) %>% 
   kable()
 ```
+
+## Approach 2: CancerGram as a single model
+
+```{r}
+benchmark_res %>%  
+  filter(!(Software %in% c("CancerGram", "CancerGramMC", 
+                           "CancerGram on AntiCP dataset"))) %>% 
+  mutate(CancerGram = grepl("CancerGramMC", Software),
+         Software = ifelse(CancerGram, "CancerGramMC", as.character(Software))) %>% 
+  pivot_longer(cols = c(Sensitivity, Specificity, Accuracy, MCC)) %>% 
+  filter(name != "MCC") %>% 
+  ggplot(aes(x = Software, y = value, fill = CancerGram)) +
+  geom_col() +
+  scale_fill_manual(values = c("grey", "red"), guide = FALSE) +
+  facet_grid(Datasets ~ name, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+## Approach 2: CancerGram as a single model
+
+```{r}
+benchmark_res %>%  
+  filter(!(Software %in% c("CancerGram", "CancerGramMC", 
+                           "CancerGram on AntiCP dataset"))) %>% 
+  mutate(CancerGram = grepl("CancerGramMC", Software),
+         Software = ifelse(CancerGram, "CancerGramMC", as.character(Software))) %>% 
+  pivot_longer(cols = c(Sensitivity, Specificity, Accuracy, MCC)) %>% 
+  filter(name == "MCC") %>% 
+  ggplot(aes(x = Software, y = value, fill = CancerGram)) +
+  geom_col() +
+  scale_fill_manual(values = c("grey", "red"), guide = FALSE) +
+  facet_grid(Datasets ~ name, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
