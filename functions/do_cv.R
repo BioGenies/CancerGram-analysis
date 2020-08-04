@@ -58,3 +58,18 @@ do_cv <- function(mer_df, binary_ngrams) {
   }) %>% bind_rows()
 }
 
+
+do_cv_degenerate <- function(mer_df, binary_ngrams, elements_groups, mc = TRUE) {
+  pblapply(elements_groups, function(ith_alphabet){
+    deg_binary_ngrams <- degenerate_ngrams(binary_ngrams, string2list(ith_alphabet), binarize = TRUE)
+    (if (mc == TRUE) {
+      do_cv_mc(mer_df, deg_binary_ngrams)
+    } else {
+      do_cv(mer_df, deg_binary_ngrams)
+    })%>% 
+      mutate(alphabet = ith_alphabet) %>% 
+      write.csv(file = paste0("results/", ith_alphabet, ".csv"), 
+                row.names = FALSE)
+  })
+}
+
