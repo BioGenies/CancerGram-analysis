@@ -29,6 +29,8 @@ source("./functions/do_cv.R")
 source("./functions/train_model_peptides.R")
 source("./functions/mc_model_functions.R")
 source("./functions/get_selected_features.R")
+source("./functions/benchmark_functions.R")
+source("./functions/degenerate_ngrams.R")
 
 analysis_CancerGram <- drake_plan(gathered_data = gather_raw_data(),
                                   raw_data = read_raw_data(),
