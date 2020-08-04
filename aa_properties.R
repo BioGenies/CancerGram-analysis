@@ -54,8 +54,13 @@ all_seq_list <- list(AMP = readd(amp), neg = readd(negative_data), ACP = readd(c
                      AMP_AntiCP = readd(neg_train_main), neg_AntiCP = readd(neg_train_alt), 
                      ACP_AntiCP = readd(pos_train_main))
 data(aaindex)
+props_with_missing_data <- c("AVBF000101", "AVBF000102", "AVBF000103", "AVBF000104", "AVBF000105", 
+                             "AVBF000106", "AVBF000107", "AVBF000108", "AVBF000109", "YANJ020101", 
+                             "GUYH850103", "ROSM880104", "ROSM880105")
 
-all_prop_dat <- lapply(names(aaindex), function(ith_prop_type) 
+all_properties <- names(aaindex)[which(!(names(aaindex) %in% props_with_missing_data))]
+
+all_prop_dat <- lapply(all_properties, function(ith_prop_type) 
   lapply(names(all_seq_list), function(ith_seq_type) {
     data.frame(seq_type = gsub("_AntiCP", "", ith_seq_type), prop_type = ith_prop_type, 
                value = encode_seq(all_seq_list[[ith_seq_type]], ith_prop_type),
@@ -64,14 +69,30 @@ all_prop_dat <- lapply(names(aaindex), function(ith_prop_type)
   }) %>% bind_rows
 ) %>% bind_rows()
 
-diffs <- group_by(all_prop_dat, dataset, prop_type, seq_type) %>% 
-  summarize(mean_val = mean(value)) %>% 
-  pivot_wider(names_from = seq_type, values_from = mean_val) %>% 
-  group_by(prop_type, dataset) %>%
-  summarise(diff_acp_amp = abs(ACP - AMP)) %>% 
-  arrange(desc(diff_acp_amp)) 
 
-prop_order <- unique(diffs[["prop_type"]])
+ks_test_res <- lapply(unique(all_prop_dat[["prop_type"]]), function(ith_prop) {
+  amps <- filter(all_prop_dat, prop_type == ith_prop & seq_type == "AMP" & dataset == "AntiCP")[["value"]]
+  acps <- filter(all_prop_dat, prop_type == ith_prop & seq_type == "ACP" & dataset == "AntiCP")[["value"]]
+  data.frame(prop_type = ith_prop,
+             pval = ks.test(acps, amps, exact = FALSE)[["p.value"]],
+             stringsAsFactors = FALSE)
+}) %>% 
+  bind_rows() %>% 
+  arrange(pval)
+
+
+median_diffs <- all_prop_dat %>% 
+  group_by(prop_type, seq_type) %>% 
+  summarise(median = median(value),
+            iqr = IQR(value)) %>% 
+  filter(seq_type != "neg") %>% 
+  select(-iqr) %>% 
+  pivot_wider(names_from = seq_type, values_from = median) %>% 
+  group_by(prop_type) %>% 
+  summarise(median_diff = abs(ACP-AMP)) %>% 
+  arrange(desc(median_diff))
+
+prop_order <- median_diffs[["prop_type"]]
 dataset_color = c(ACP = "#d73027", AMP = "#fc8d59", neg = "#91bfdb")
 
 lapply(seq(1, length(prop_order), 8), function(i) {
