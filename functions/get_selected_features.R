@@ -1,6 +1,6 @@
 get_selected_features <- function(alphabets) {
   selected_features <- alphabets[["features"]]
-  data("aaindex")
+
   prop_names <- sapply(1:length(aaindex), function(x) {
     paste(attributes(aaindex[x]))
   })

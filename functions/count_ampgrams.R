@@ -1,7 +1,7 @@
 count_ngrams <- function(mer_df, k, gaps) {
   mer_df[, grep("^X", colnames(mer_df))] %>% 
     as.matrix() %>% 
-    find_kmers(sequences = .,
+    count_kmers(sequences = .,
                k = k,
                kmer_gaps = gaps,
                alphabet = toupper(colnames(aaprop))) %>% 

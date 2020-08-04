@@ -31,6 +31,7 @@ source("./functions/mc_model_functions.R")
 source("./functions/get_selected_features.R")
 source("./functions/benchmark_functions.R")
 source("./functions/degenerate_ngrams.R")
+data(aaindex)
 
 analysis_CancerGram <- drake_plan(gathered_data = gather_raw_data(),
                                   raw_data = read_raw_data(),
@@ -65,7 +66,7 @@ analysis_CancerGram <- drake_plan(gathered_data = gather_raw_data(),
                                                                              list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
                                   alphabets = create_alphabets(),
                                   selected_features = get_selected_features(alphabets),
-                                  cv_degenerate = do_cv_degenerate(mer_df, binary_ngrams, alphabets[["aagroups"]]))
+                                  cv_degenerate = do_cv_degenerate(mers_mc_anticp, ngrams_mc_anticp, alphabets[["aagroups"]]))
 
 
 make(analysis_CancerGram, seed = 2938)
