@@ -29,12 +29,10 @@ create_traits_combination <- function(ftraits) {
 #' @param list_duplicates if \code{TRUE} returns also a list of duplicates.
 #' @return a named vector of alphabets (for example 
 #' \code{iknty_degpqrs_acfhlmvw})
-create_alphabets <- function(list_duplicates = FALSE) {
+create_alphabets <- function(ftraits, list_duplicates = FALSE) {
   
   paste_enc <- function(x)
     paste0(sapply(x, paste0, collapse = ""), collapse = "_")
-  
-  ftraits <- c("ARGP820101")
   
   grouping_properties <- aaprop[ftraits, ]
   all_traits_combn_list <- create_traits_combination(ftraits)

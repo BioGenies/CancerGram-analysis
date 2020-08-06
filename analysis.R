@@ -64,7 +64,7 @@ analysis_CancerGram <- drake_plan(gathered_data = gather_raw_data(),
                                   ngrams_mc_anticp = count_and_gather_ngrams(mers_mc_anticp,
                                                                              c(1, rep(2, 4), rep(3, 4)),
                                                                              list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
-                                  alphabets = create_alphabets(),
+                                  alphabets = create_alphabets(c("ARGP820101")),
                                   selected_features = get_selected_features(alphabets),
                                   cv_degenerate = do_cv_degenerate(mers_mc_anticp, ngrams_mc_anticp, alphabets[["aagroups"]]))
 
