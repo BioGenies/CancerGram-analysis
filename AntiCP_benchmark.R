@@ -98,7 +98,7 @@ benchmark_first_models <- drake_plan(
                                                     select(benchmark_stats_mc_anticp, -source_peptide))[["predictions"]]),
   # sum of p-values < 0.001 in feature selection:
   imp_ngrams_sum_mc_anticp = get_imp_ngrams_sum_mc(ngrams_mc_anticp, mers_mc_anticp),
-  mer_model_sum_mc_antip = train_mc_model_mers(mers_mc_anticp, ngrams_mc_anticp, imp_ngrams_sum_mc_anticp),
+  mer_model_sum_mc_anticp = train_mc_model_mers(mers_mc_anticp, ngrams_mc_anticp, imp_ngrams_sum_mc_anticp),
   mer_preds_sum_mc_anticp = cbind(mers_mc_anticp, 
                               predict(mer_model_sum_mc_anticp, as.matrix(ngrams_mc_anticp[, imp_ngrams_sum_mc_anticp]))[["predictions"]]),
   stats_sum_mc_anticp = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
@@ -255,7 +255,7 @@ mc_decisions <- mutate(mc, decision = case_when(acp > amp & acp > neg  ~ "acp",
 
 ACC(mc_decisions[["target"]], mc_decisions[["decision"]])
 table(mc_decisions[,c(2,6)])
-
+  
 
 
 all_res_mc <- bind_rows(mutate(mc, model = "mc"),

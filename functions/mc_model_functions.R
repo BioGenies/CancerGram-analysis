@@ -88,7 +88,8 @@ get_imp_ngrams_sum_mc <- function(ngrams, mer_df, cutoff = 0.001) {
       setNames(c("ngram", paste(ith_cmbn, collapse = "_")))
   }) %>% Reduce(function(x, y, ...) full_join(x, y, by = "ngram", ...), .)
   res_df <- data.frame(ngram = test_res[["ngram"]],
-             pval_sum = rowSums(test_res[, 2:4], na.rm = TRUE))
+                       pval_sum = rowSums(test_res[, 2:4], na.rm = TRUE),
+                       stringsAsFactors = FALSE)
   filter(res_df, pval_sum < cutoff)[["ngram"]]
 }
 
