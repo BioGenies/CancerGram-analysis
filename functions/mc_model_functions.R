@@ -76,6 +76,21 @@ get_imp_ngrams_mc <- function(ngrams, mer_df, cutoff = 0.05) {
 }
 
 
+get_imp_ngrams_sum_mc <- function(ngrams, mer_df, cutoff = 0.001) {
+  combns <- combn(unique(mer_df[["target"]]), 2, simplify = FALSE)
+  test_res <- lapply(combns, function(ith_cmbn) {
+    tar <- filter(mer_df, target %in% ith_cmbn) %>% 
+      mutate(target = ifelse(target == ith_cmbn[1], 1, 0))
+    features <- ngrams[mer_df[["target"]] %in% ith_cmbn,]
+    test_bis <- test_features(tar[["target"]], features) %>% 
+      data.frame(stringsAsFactors = FALSE) %>% 
+      select(c("ngram", "p.value")) %>% 
+      setNames(c("ngram", paste(ith_cmbn, collapse = "_")))
+  }) %>% Reduce(function(x, y, ...) full_join(x, y, by = "ngram", ...), .)
+  res_df <- data.frame(ngram = test_res[["ngram"]],
+             pval_sum = rowSums(test_res[, 2:4], na.rm = TRUE))
+  filter(res_df, pval_sum < cutoff)[["ngram"]]
+}
 
 train_mc_model_mers <- function(mer_df, binary_ngrams, imp_bigrams) {
   ranger_train_data <- data.frame(as.matrix(binary_ngrams[, imp_bigrams]),

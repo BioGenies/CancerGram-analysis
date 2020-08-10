@@ -94,15 +94,32 @@ benchmark_first_models <- drake_plan(
   benchmark_stats_mc_anticp = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
     calculate_statistics_single(benchmark_mer_preds_mc_anticp, i)))[,-c(17,18,33,34)],
   benchmark_peptide_preds_mc_anticp = cbind(benchmark_stats_mc_anticp[, c("source_peptide", "target")],
-                                     predict(peptide_model_mc_anticp,
-                                             select(benchmark_stats_mc_anticp, -source_peptide))[["predictions"]]),
+                                            predict(peptide_model_mc_anticp,
+                                                    select(benchmark_stats_mc_anticp, -source_peptide))[["predictions"]]),
+  # sum of p-values < 0.001 in feature selection:
+  imp_ngrams_sum_mc_anticp = get_imp_ngrams_sum_mc(ngrams_mc_anticp, mers_mc_anticp),
+  mer_model_sum_mc_antip = train_mc_model_mers(mers_mc_anticp, ngrams_mc_anticp, imp_ngrams_sum_mc_anticp),
+  mer_preds_sum_mc_anticp = cbind(mers_mc_anticp, 
+                              predict(mer_model_sum_mc_anticp, as.matrix(ngrams_mc_anticp[, imp_ngrams_sum_mc_anticp]))[["predictions"]]),
+  stats_sum_mc_anticp = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
+    calculate_statistics_single(mer_preds_sum_mc_anticp, i)))[,-c(17,18,33,34)],
+  peptide_model_sum_mc_anticp = train_mc_model_peptides(stats_sum_mc_anticp),
+  benchmark_ngrams_sum_mc_anticp = count_imp_ngrams(benchmark_mers_mc_anticp, imp_ngrams_sum_mc_anticp),
+  benchmark_mer_preds_sum_mc_anticp = cbind(benchmark_mers_mc_anticp, 
+                                        predict(mer_model_sum_mc_anticp, 
+                                                as.matrix(benchmark_ngrams_sum_mc_anticp))[["predictions"]]),
+  benchmark_stats_sum_mc_anticp = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
+    calculate_statistics_single(benchmark_mer_preds_sum_mc_anticp, i)))[,-c(17,18,33,34)],
+  benchmark_peptide_preds_sum_mc_anticp = cbind(benchmark_stats_sum_mc_anticp[, c("source_peptide", "target")],
+                                            predict(peptide_model_sum_mc_anticp,
+                                                    select(benchmark_stats_sum_mc_anticp, -source_peptide))[["predictions"]]),
   
   ### Binary models mers + peptides 
   # ACP/non-ACP our datasets
   mers_acp_neg = mutate(filter(mers_mc, target %in% c("acp", "neg")),
                         target = ifelse(target == "acp", TRUE, FALSE)),
   ngrams_acp_neg = count_and_gather_ngrams(mers_acp_neg,
-                                           c(1, rep(2, 4), rep(3, 4)),
+                                             c(1, rep(2, 4), rep(3, 4)),
                                            list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
   imp_ngrams_acp_neg = calc_imp_bigrams(mers_acp_neg, ngrams_acp_neg),
   mer_model_acp_neg = train_model_mers(mers_acp_neg, ngrams_acp_neg, imp_ngrams_acp_neg),
@@ -262,3 +279,12 @@ filter(all_res_mc, grepl("AP|Cancer|DRAMP|CUTTED|pos_test|test_alt", source_pept
             Sensitivity = mlr3measures::sensitivity(target, decision, "TRUE")*100,
             Specificity = mlr3measures::specificity(target, decision, "TRUE")*100,
             Accuracy = mlr3measures::acc(target, decision)*100)
+
+
+### Find improperly predicted peptides (MC model on AntiCP data)
+readd(benchmark_peptide_preds_mc_anticp) %>% 
+  mutate(decision = case_when(acp > amp & acp > neg  ~ "acp",
+                              amp > acp & amp > neg ~ "amp",
+                              neg > amp & neg > acp ~ "neg")) %>% 
+  filter(decision != target) %>% 
+  write.csv("improperly_predicted.csv", row.names = FALSE)
