@@ -90,20 +90,24 @@ median_diffs <- all_prop_dat %>%
   pivot_wider(names_from = seq_type, values_from = median) %>% 
   group_by(prop_type) %>% 
   summarise(median_diff = abs(ACP-AMP)) %>% 
-  arrange(desc(median_diff))
+  arrange(desc(median_diff)) %>% 
+  mutate(prop_name = sapply(prop_type, function(ith_prop) aaindex[[ith_prop]][["D"]]))
 
-prop_order <- median_diffs[["prop_type"]]
+prop_order <- median_diffs[["prop_type"]] 
 dataset_color = c(ACP = "#d73027", AMP = "#fc8d59", neg = "#91bfdb")
 
 lapply(seq(1, length(prop_order), 8), function(i) {
-  props <- prop_order[i:(i+7)]
+  props <- factor(prop_order[i:(i+7)], levels = prop_order)
   plot_dat <- filter(all_prop_dat, prop_type %in% props) %>% 
+    mutate(prop_type = factor(prop_type, levels = prop_order)) %>% 
     group_by(dataset) 
   plot <- ggplot(plot_dat, aes(x = seq_type, y = value, fill = seq_type)) +
     geom_violin() +
     scale_fill_manual("Dataset", values = dataset_color) +
     facet_grid(dataset ~ prop_type, 
-               labeller = labeller(prop_type = sapply(props, function(ith_prop) gsub("(", "\n(", aaindex[[ith_prop]][["D"]], fixed = TRUE))))
+               label = labeller(prop_type = sapply(props, function(ith_prop)
+                 gsub("(", "\n(", median_diffs[["prop_name"]][which(median_diffs[["prop_type"]] == ith_prop)], fixed = TRUE),
+                 USE.NAMES = FALSE), levels = props))
   ggsave(paste0("./prop_plots/props_", i, "-", i+7, ".png"), plot, "png", width = 28, height = 10)
 })
 
