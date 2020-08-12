@@ -22,7 +22,7 @@ string2list <- function(x) {
 
 
 
-do_cv <- function(mer_df, binary_ngrams) {
+do_cv <- function(mer_df, binary_ngrams, cutoff = 0.05) {
   possible_groups <- sort_group(unique(mer_df[["group"]]))
   group_combs <- list(possible_groups[1:2], possible_groups[1:3], possible_groups[1:4], c(possible_groups))
   lapply(group_combs, function(ith_group) {
@@ -35,7 +35,7 @@ do_cv <- function(mer_df, binary_ngrams) {
                                 binary_ngrams[mer_df[["group"]] %in% ith_group & 
                                                 mer_df[["fold"]] != ith_fold, ])
       
-      imp_bigrams <- cut(test_bis, breaks = c(0, 0.05, 1))[[1]]
+      imp_bigrams <- cut(test_bis, breaks = c(0, cutoff, 1))[[1]]
       
       ranger_train_data <- data.frame(as.matrix(binary_ngrams[mer_df[["group"]] %in% ith_group & 
                                                                 mer_df[["fold"]] != ith_fold, imp_bigrams]),
@@ -59,16 +59,16 @@ do_cv <- function(mer_df, binary_ngrams) {
 }
 
 
-do_cv_degenerate <- function(mer_df, binary_ngrams, elements_groups, mc = TRUE) {
+do_cv_degenerate <- function(mer_df, binary_ngrams, elements_groups, cutoff, mc = TRUE) {
   pblapply(elements_groups, function(ith_alphabet){
     deg_binary_ngrams <- degenerate_ngrams(binary_ngrams, string2list(ith_alphabet), binarize = TRUE)
     (if (mc == TRUE) {
-      do_cv_mc(mer_df, deg_binary_ngrams)
+      do_cv_mc(mer_df, deg_binary_ngrams, cutoff)
     } else {
-      do_cv(mer_df, deg_binary_ngrams)
+      do_cv(mer_df, deg_binary_ngrams, cutoff)
     })%>% 
       mutate(alphabet = ith_alphabet) %>% 
-      write.csv(file = paste0("results/", ith_alphabet, ".csv"), 
+      write.csv(file = paste0(data_path, "results/", ith_alphabet, ".csv"), 
                 row.names = FALSE)
   })
 }

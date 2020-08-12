@@ -53,8 +53,7 @@ benchmark_first_models <- drake_plan(
   imp_ngrams_mc = unique(unlist(unname(imp_ngrams_dat_mc))),
   mer_model_mc = train_mc_model_mers(mers_mc, ngrams_mc, imp_ngrams_mc),
   mer_preds_mc = cbind(mers_mc, predict(mer_model_mc, as.matrix(ngrams_mc[, imp_ngrams_mc]))[["predictions"]]),
-  stats_mc = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
-    calculate_statistics_single(mer_preds_mc, i)))[,-c(17,18,33,34)],
+  stats_mc = calculate_statistics_mc(mer_preds_mc, c("acp", "amp", "neg")),
   peptide_model_mc = train_mc_model_peptides(stats_mc),
   benchmark_seqs_mc = read_fasta("./results/benchmark_mc.fasta"),
   benchmark_mers_mc = mer_df_from_list_len_group(benchmark_seqs_mc),
@@ -62,8 +61,7 @@ benchmark_first_models <- drake_plan(
   benchmark_mer_preds_mc = cbind(benchmark_mers_mc, 
                               predict(mer_model_mc, 
                                       as.matrix(benchmark_ngrams_mc))[["predictions"]]),
-  benchmark_stats_mc = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
-    calculate_statistics_single(benchmark_mer_preds_mc, i)))[,-c(17,18,33,34)],
+  benchmark_stats_mc = calculate_statistics_mc(benchmark_mer_preds_mc, c("acp", "amp", "neg")),
   benchmark_peptide_preds_mc = cbind(benchmark_stats_mc[, c("source_peptide", "target")],
                                      predict(peptide_model_mc,
                                        select(benchmark_stats_mc, -source_peptide))[["predictions"]]),
@@ -80,8 +78,7 @@ benchmark_first_models <- drake_plan(
   imp_ngrams_mc_anticp = unique(unlist(unname(imp_ngrams_dat_mc_anticp))),
   mer_model_mc_anticp = train_mc_model_mers(mers_mc_anticp, ngrams_mc_anticp, imp_ngrams_mc_anticp),
   mer_preds_mc_anticp = cbind(mers_mc_anticp, predict(mer_model_mc_anticp, as.matrix(ngrams_mc_anticp[, imp_ngrams_mc_anticp]))[["predictions"]]),
-  stats_mc_anticp = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
-    calculate_statistics_single(mer_preds_mc_anticp, i)))[,-c(17,18,33,34)],
+  stats_mc_anticp = calculate_statistics_mc(mer_preds_mc_anticp,  c("acp", "amp", "neg")),
   peptide_model_mc_anticp = train_mc_model_peptides(stats_mc_anticp),
   benchmark_mers_mc_anticp = mutate(mer_df_from_list_len_group(c(pos_test_main, neg_test_main, neg_test_alt)),
                                     target = case_when(grepl("pos_test_main", source_peptide) ~ "acp",
@@ -91,29 +88,10 @@ benchmark_first_models <- drake_plan(
   benchmark_mer_preds_mc_anticp = cbind(benchmark_mers_mc_anticp, 
                                  predict(mer_model_mc_anticp, 
                                          as.matrix(benchmark_ngrams_mc_anticp))[["predictions"]]),
-  benchmark_stats_mc_anticp = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
-    calculate_statistics_single(benchmark_mer_preds_mc_anticp, i)))[,-c(17,18,33,34)],
+  benchmark_stats_mc_anticp = calculate_statistics_mc(benchmark_mer_preds_mc_anticp, c("acp", "amp", "neg")),
   benchmark_peptide_preds_mc_anticp = cbind(benchmark_stats_mc_anticp[, c("source_peptide", "target")],
                                             predict(peptide_model_mc_anticp,
                                                     select(benchmark_stats_mc_anticp, -source_peptide))[["predictions"]]),
-  # sum of p-values < 0.001 in feature selection:
-  imp_ngrams_sum_mc_anticp = get_imp_ngrams_sum_mc(ngrams_mc_anticp, mers_mc_anticp),
-  mer_model_sum_mc_anticp = train_mc_model_mers(mers_mc_anticp, ngrams_mc_anticp, imp_ngrams_sum_mc_anticp),
-  mer_preds_sum_mc_anticp = cbind(mers_mc_anticp, 
-                              predict(mer_model_sum_mc_anticp, as.matrix(ngrams_mc_anticp[, imp_ngrams_sum_mc_anticp]))[["predictions"]]),
-  stats_sum_mc_anticp = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
-    calculate_statistics_single(mer_preds_sum_mc_anticp, i)))[,-c(17,18,33,34)],
-  peptide_model_sum_mc_anticp = train_mc_model_peptides(stats_sum_mc_anticp),
-  benchmark_ngrams_sum_mc_anticp = count_imp_ngrams(benchmark_mers_mc_anticp, imp_ngrams_sum_mc_anticp),
-  benchmark_mer_preds_sum_mc_anticp = cbind(benchmark_mers_mc_anticp, 
-                                        predict(mer_model_sum_mc_anticp, 
-                                                as.matrix(benchmark_ngrams_sum_mc_anticp))[["predictions"]]),
-  benchmark_stats_sum_mc_anticp = do.call(cbind, lapply(c("acp", "amp", "neg"), function(i) 
-    calculate_statistics_single(benchmark_mer_preds_sum_mc_anticp, i)))[,-c(17,18,33,34)],
-  benchmark_peptide_preds_sum_mc_anticp = cbind(benchmark_stats_sum_mc_anticp[, c("source_peptide", "target")],
-                                            predict(peptide_model_sum_mc_anticp,
-                                                    select(benchmark_stats_sum_mc_anticp, -source_peptide))[["predictions"]]),
-  
   ### Binary models mers + peptides 
   # ACP/non-ACP our datasets
   mers_acp_neg = mutate(filter(mers_mc, target %in% c("acp", "neg")),
