@@ -38,14 +38,14 @@ create_alphabets <- function(ftraits, list_duplicates = FALSE) {
   all_traits_combn_list <- create_traits_combination(ftraits)
   
   #create alphabets
-  all_aa_groups <- pblapply(3L:6, function(single_k) {
+  all_aa_groups <- {
     res <- unlist(lapply(all_traits_combn_list, function(all_traits_combn)
       vapply(1L:nrow(all_traits_combn), function(single_trait_combn) {
         cl <- t(aaprop[unlist(all_traits_combn[single_trait_combn, , drop = FALSE]), , drop = FALSE]) %>%
           dist %>%
           hclust(method = "ward.D2")
         #cl <- hclust(dist(t(aaprop[unlist(all_traits_combn[single_trait_combn, , drop = FALSE]), , drop = FALSE])))
-        gr <- cutree(cl, k = single_k)
+        gr <- cutree(cl, k = 6)
         names(gr) <- tolower(names(gr))
         agg_gr <- lapply(unique(gr), function(single_group) names(gr[gr == single_group]))
         #inside alphabets, amino acids are ordered alphabetically
@@ -53,9 +53,9 @@ create_alphabets <- function(ftraits, list_duplicates = FALSE) {
         #groups are sorted by their length
         paste_enc(agg_gr[order(lengths(agg_gr))])
       }, "a")))
-    names(res) <- paste0("ID", 1L:length(res), "K", single_k)
+    names(res) <- paste0("ID", 1L:length(res), "K", 6)
     res
-  })
+  }
   
   #get indices of unique alphabets
   aa_id <- lapply(all_aa_groups, function(i) !duplicated(i))
