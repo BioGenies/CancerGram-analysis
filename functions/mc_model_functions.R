@@ -87,30 +87,23 @@ train_mc_model_mers <- function(mer_df, binary_ngrams, imp_bigrams) {
 
 
 calculate_statistics_single <- function(mer_preds, group) {
-  if(!("target" %in% colnames(mer_preds))) {
-    mer_preds <- mutate(mer_preds, target = case_when(grepl("CUTTED", source_peptide) ~ "neg",
-                                                      grepl("dbAMP", source_peptide) ~ "amp",
-                                                      grepl("CancerPPD|AP|DRAMP", source_peptide) ~ "acp",
-                                                      grepl("pos_train_main", source_peptide) ~ "acp",
-                                                      grepl("neg_train_main", source_peptide) ~ "amp",
-                                                      grepl("neg_train_alternate", source_peptide) ~ "neg"))
-  }
+
   if ("fold" %in% colnames(mer_preds)) {
-    mer_preds[c("source_peptide", "target", "fold", group)] %>% 
-      setNames(c("source_peptide", "target", "fold", "pred")) %>% 
+    mer_preds[c("source_peptide", "fold", group)] %>% 
+      setNames(c("source_peptide", "fold", "pred")) %>% 
       calculate_statistics() %>% {
         df <- .
-        nondescriptive_names <- setdiff(colnames(df), c("source_peptide", "target", "fold"))
+        nondescriptive_names <- setdiff(colnames(df), c("source_peptide", "fold"))
         colnames(df)[colnames(df) %in% nondescriptive_names] <- 
           paste0(group, "_", colnames(df)[colnames(df) %in% nondescriptive_names])
         df
       } 
     } else {
-        mer_preds[c("source_peptide", "target", group)] %>% 
-          setNames(c("source_peptide", "target", "pred")) %>% 
+        mer_preds[c("source_peptide", group)] %>% 
+          setNames(c("source_peptide", "pred")) %>% 
           calculate_statistics() %>% {
             df <- .
-            nondescriptive_names <- setdiff(colnames(df), c("source_peptide", "target"))
+            nondescriptive_names <- setdiff(colnames(df), "source_peptide")
             colnames(df)[colnames(df) %in% nondescriptive_names] <- 
               paste0(group, "_", colnames(df)[colnames(df) %in% nondescriptive_names])
             df
@@ -129,8 +122,13 @@ calculate_statistics_mc <- function(mer_preds, groups) {
 
 
 train_mc_model_peptides <- function(mer_statistics) {
-  train_dat <- mer_statistics %>% 
-    select(-source_peptide)
+  if("fold" %in% colnames(mer_statistics)) {
+    train_dat <- mer_statistics %>% 
+      select(-c(source_peptide, fold))
+  } else {
+    train_dat <- mer_statistics %>% 
+      select(-source_peptide)
+  }
   peptide_model <- ranger(dependent.variable.name = "target", data = train_dat, 
                           write.forest = TRUE, probability = TRUE, num.trees = 500, 
                           verbose = FALSE, classification = TRUE)

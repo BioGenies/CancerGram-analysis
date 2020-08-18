@@ -9,13 +9,10 @@ count_longest <- function(x) {
 }
 
 calculate_statistics <- function(pred_mers) {
-  if(!("target" %in% colnames(pred_mers))) {
-    pred_mers <- mutate(pred_mers, target = ifelse(grepl("CancerPPD|AP|DRAMP", source_peptide), TRUE, FALSE))
-  }
   (if("fold" %in% colnames(pred_mers)) {
-    group_by(pred_mers, source_peptide, target, fold)
+    group_by(pred_mers, source_peptide, fold)
   } else {  
-    group_by(pred_mers, source_peptide, target)
+    group_by(pred_mers, source_peptide)
   }) %>% 
     summarise(fraction_true = mean(pred > 0.5),
               pred_mean = mean(pred),
@@ -31,8 +28,7 @@ calculate_statistics <- function(pred_mers) {
               frac_0.4_0.6 = sum(pred > 0.4 & pred <= 0.6)/n(),
               frac_0.6_0.8 = sum(pred > 0.6 & pred <= 0.8)/n(),
               frac_0.8_1 = sum(pred > 0.8 & pred <= 1)/n()) %>% 
-    ungroup() %>% 
-    mutate(target = factor(target))
+    ungroup() 
 }
 
 train_model_peptides <- function(mer_statistics) {
