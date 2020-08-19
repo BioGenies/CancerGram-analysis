@@ -7,17 +7,26 @@ library(ggplot2)
 library(tidyr)
 library(cvTools)
 library(measures)
+library(pbapply)
 
+if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {
+  data_path <- "/home/kasia/Dropbox/Projekty/BioNgramProjects/CancerGram/"
+}
+
+source("./functions/raw_data.R")
+source("./functions/cdhit_data.R")
+source("./functions/nonstandard_AMPs.R")
+source("./functions/cutting_seqs.R")
+source("./functions/holdouts.R")
+source("./functions/writing_benchmarks.R")
 source("./functions/get_mers.R")
+source("./functions/do_cv.R")
 source("./functions/count_ampgrams.R")
 source("./functions/benchmark_functions.R")
 source("./functions/holdouts.R")
 source("./functions/mc_model_functions.R")
 source("./functions/writing_benchmarks.R")
 source("./functions/train_model_peptides.R")
-
-loadd(cdhit_data)
-loadd(negative_data)
 
 benchmark_first_models <- drake_plan(
   # AntiCP datasets
@@ -211,7 +220,7 @@ benchmark_first_models <- drake_plan(
                                                  pred = predict(peptide_model_acp_amp_anticp, benchmark_stats_acp_amp_anticp)[["predictions"]][, "TRUE"])
 )
 
-make(benchmark_first_models, seed = 2938)
+make(benchmark_first_models, seed = 2938, cache = new_cache("benchmark_cache"))
 
 # saveRDS(main_preds, "./results/main_dataset_preds.RDS")
 # saveRDS(alt_preds, "./results/alt_dataset_preds.RDS")
