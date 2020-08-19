@@ -73,7 +73,7 @@ benchmark_first_models <- drake_plan(
                                           list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
   cv_raw_mc = do_cv_mc(mer_df_mc, binary_ngrams, 0.05),
   benchmark_mc = write_benchmark_mc(acp, acp_ids, amp, amp_ids, neg, neg_ids),
-  imp_ngrams_dat_mc = get_imp_ngrams_mc(ngrams_mc, mers_mc, 0.05),
+  imp_ngrams_dat_mc = get_imp_ngrams_mc(ngrams_mc, mer_df_mc, 0.05),
   imp_ngrams_mc = unique(unlist(unname(imp_ngrams_dat_mc))),
   mer_model_mc = train_mc_model_mers(mer_df_mc, ngrams_mc, imp_ngrams_mc),
   mer_preds_mc = cbind(mer_df_mc, predict(mer_model_mc, as.matrix(ngrams_mc[, imp_ngrams_mc]))[["predictions"]]),
@@ -130,7 +130,7 @@ benchmark_first_models <- drake_plan(
                                                     select(benchmark_stats_mc_anticp, -source_peptide))[["predictions"]]),
   ### Binary models mers + peptides 
   # ACP/non-ACP our datasets
-  mers_acp_neg = mutate(filter(mers_mc, target %in% c("acp", "neg")),
+  mers_acp_neg = mutate(filter(mer_df_mc, target %in% c("acp", "neg")),
                         target = ifelse(target == "acp", TRUE, FALSE)),
   ngrams_acp_neg = count_and_gather_ngrams(mers_acp_neg,
                                            c(1, rep(2, 4), rep(3, 4)),
@@ -152,7 +152,7 @@ benchmark_first_models <- drake_plan(
                                           pred = predict(peptide_model_acp_neg, benchmark_stats_acp_neg)[["predictions"]][, "TRUE"]),
   
   # ACP/AMP our datasets
-  mers_acp_amp = mutate(filter(mers_mc, target %in% c("acp", "amp")),
+  mers_acp_amp = mutate(filter(mer_df_mc, target %in% c("acp", "amp")),
                         target = ifelse(target == "acp", TRUE, FALSE)),
   ngrams_acp_amp = count_and_gather_ngrams(mers_acp_amp,
                                            c(1, rep(2, 4), rep(3, 4)),
