@@ -1,6 +1,7 @@
 library(dplyr)
 library(drake)
 library(biogram)
+library(magrittr)
 library(seqR)
 library(ranger)
 library(ggplot2)
@@ -72,7 +73,12 @@ benchmark_first_models <- drake_plan(
                                           c(1, rep(2, 4), rep(3, 4)),
                                           list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
   cv_raw_mc = do_cv_mc(mer_df_mc, binary_ngrams, 0.05),
-  benchmark_mc = write_benchmark_mc(acp, acp_ids, amp, amp_ids, neg, neg_ids),
+  benchmark_mc = write_benchmark_mc(acp = cdhit_acp_data,
+                                    acp_id = cdhit_acp_data_ids,
+                                    amp = amp_filtered_data,
+                                    amp_id = amp_filtered_data_ids,
+                                    neg = neg_data,
+                                    neg_id = neg_data_ids),
   imp_ngrams_dat_mc = get_imp_ngrams_mc(ngrams_mc, mer_df_mc, 0.05),
   imp_ngrams_mc = unique(unlist(unname(imp_ngrams_dat_mc))),
   mer_model_mc = train_mc_model_mers(mer_df_mc, ngrams_mc, imp_ngrams_mc),
