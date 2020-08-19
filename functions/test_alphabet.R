@@ -10,8 +10,11 @@ count_longest <- function(x) {
 
 
 test_alphabet_mc <- function(alphabet_file) {
-  dat <- read.csv(alphabet_file, stringsAsFactors = FALSE)
-    stats <- calculate_statistics_mc(dat, c("acp", "amp", "neg"))
+    dat <- read.csv(alphabet_file, stringsAsFactors = FALSE)
+    stats <- calculate_statistics_mc(dat, c("acp", "amp", "neg")) %>% 
+      mutate(target = factor(case_when(grepl("pos_train_main", source_peptide) ~ "acp",
+                                       grepl("neg_train_main", source_peptide) ~ "amp",
+                                       grepl("neg_train_alternate", source_peptide) ~ "neg")))
     lapply(1L:5, function(ith_fold) {
       test_dat <- filter(stats, fold == ith_fold) %>% 
         select(-c("source_peptide", "target", "fold"))
@@ -32,7 +35,7 @@ test_all_alphabets_mc <- function(data_path, alphabets) {
     test_alphabet_mc(paste0(data_path, "results/", ith_alphabet, ".csv"))
   }) %>% bind_rows()
 }
-
+  
 
 calc_measures_alphabets_mc <- function(alphabets_preds) {
   lapply(unique(alphabets_preds[["alphabet"]]), function(ith_alphabet) {

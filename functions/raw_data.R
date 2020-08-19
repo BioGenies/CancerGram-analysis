@@ -27,21 +27,42 @@ gather_raw_data <- function() {
               file.out = "./data/all_ACPs.fasta")
 }
 
-#' Reads in the raw AMP sequences for analysis
+#' Reads in the sequences for analysis
 #' 
-#' Reads in AMP sequences from the dbAMP database and extracts those
-#' with experimental evidence for antimicrobial activity. Returns a list
-#' of two lists: 
+#' Reads in sequences and returns a list of two lists: 
 #' \itemize{
 #'  \item{standard}{Sequences comprised of only standard amino acids}
 #'  \item{non_standard}{Sequences containing nonstandard amino acids}
 #'  }
-read_raw_data <- function() 
-  read_fasta("./data/all_ACPs.fasta") %>% 
+read_raw_data <- function(data_file) 
+  read_fasta(data_file) %>% 
   purify() %T>% {
     print(paste0("Number of sequences with standard AA: ", length(.[["standard"]]))) 
     print(paste0("Number of sequences with non-standard AA: ", length(.[["non_standard"]]))) 
   }
+
+
+#' Reads in AMP sequences
+#' 
+#' Reads in the raw sequences from dbAMP database.
+read_amp_data <- function() 
+  read.csv("./data/dbamp_df.csv") %>% 
+  mutate(id = 1L:nrow(.)) %>% 
+  mutate(id = sapply(id, paste_to_five)) %>% 
+  mutate(id = paste0("dbAMP_", id)) %T>% {
+    print(paste0("Number of sequences: ", nrow(.))) 
+  } %>%
+  filter(Experimental.Evidence == "YES") %T>% {
+    print(paste0("Number of sequences: ", nrow(.))) 
+  } %>% {
+    setNames(as.character(.[["Sequence"]]), .[["id"]])
+  } %>% 
+  strsplit("") %>% 
+  purify() %T>% {
+    print(paste0("Number of sequences with standard AA: ", length(.[["standard"]]))) 
+    print(paste0("Number of sequences with non-standard AA: ", length(.[["non_standard"]]))) 
+  }
+
 
 
 #' Identifies sequences containing nonstandard amino acids.

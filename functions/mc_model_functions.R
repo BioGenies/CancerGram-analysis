@@ -6,7 +6,7 @@ filter_amps <- function(amp_full_dataset, acp_dataset) {
                         include.lowest = TRUE) %>% 
     table()
   amp_len_groups <- cut(lengths(amp),
-                        breaks = c(5, 13, 17, 22, 28, 50),
+                        breaks = as.numeric(quantile(lengths(acp_dataset), probs = seq(0, 1, 0.2))),
                         include.lowest = TRUE)
   selected <- sapply(names(acp_len_groups), USE.NAMES = FALSE, function(ith_len_group) {
     n <- acp_len_groups[ith_len_group]
@@ -17,10 +17,10 @@ filter_amps <- function(amp_full_dataset, acp_dataset) {
 }
 
 
-get_mers_mc <- function(pos, pos_id, amp, amp_id, neg, neg_id) {
-  seq_groups <- lapply(names(pos_id), function(i)
-    c(pos[pos_id[[i]][["traintest"]]], amp[amp_id[[i]][["traintest"]]], neg[neg_id[[i]][["traintest"]]])) %>% 
-    setNames(names(pos_id))
+get_mers_mc <- function(acp, acp_id, amp, amp_id, neg, neg_id) {
+  seq_groups <- lapply(names(acp_id), function(i)
+    c(acp[acp_id[[i]][["traintest"]]], amp[amp_id[[i]][["traintest"]]], neg[neg_id[[i]][["traintest"]]])) %>% 
+    setNames(names(acp_id))
   
   lapply(names(seq_groups), function(ith_group_id) {
     ith_group <- seq_groups[[ith_group_id]]
@@ -87,29 +87,29 @@ train_mc_model_mers <- function(mer_df, binary_ngrams, imp_bigrams) {
 
 
 calculate_statistics_single <- function(mer_preds, group) {
-
+  
   if ("fold" %in% colnames(mer_preds)) {
     mer_preds[c("source_peptide", "fold", group)] %>% 
       setNames(c("source_peptide", "fold", "pred")) %>% 
       calculate_statistics() %>% {
         df <- .
-        nondescriptive_names <- setdiff(colnames(df), c("source_peptide", "fold"))
+        nondescriptive_names <- setdiff(colnames(df), c("source_peptide", "target", "fold"))
         colnames(df)[colnames(df) %in% nondescriptive_names] <- 
           paste0(group, "_", colnames(df)[colnames(df) %in% nondescriptive_names])
         df
       } 
-    } else {
-        mer_preds[c("source_peptide", group)] %>% 
-          setNames(c("source_peptide", "pred")) %>% 
-          calculate_statistics() %>% {
-            df <- .
-            nondescriptive_names <- setdiff(colnames(df), "source_peptide")
-            colnames(df)[colnames(df) %in% nondescriptive_names] <- 
-              paste0(group, "_", colnames(df)[colnames(df) %in% nondescriptive_names])
-            df
-          }
+  } else {
+    mer_preds[c("source_peptide", group)] %>% 
+      setNames(c("source_peptide", "pred")) %>% 
+      calculate_statistics() %>% {
+        df <- .
+        nondescriptive_names <- setdiff(colnames(df), c("source_peptide", "target"))
+        colnames(df)[colnames(df) %in% nondescriptive_names] <- 
+          paste0(group, "_", colnames(df)[colnames(df) %in% nondescriptive_names])
+        df
       }
   }
+}
 
 
 calculate_statistics_mc <- function(mer_preds, groups) {
@@ -151,10 +151,10 @@ do_cv_mc <- function(mer_df, binary_ngrams, cutoff) {
     model_cv <- ranger(dependent.variable.name = "tar", data =  ranger_train_data, 
                        write.forest = TRUE, probability = TRUE, num.trees = 2000, 
                        verbose = FALSE)
-
+    
     preds <- cbind(test_dat,
-                    predict(model_cv, 
-                            data.frame(as.matrix(binary_ngrams[mer_df[["fold"]] == ith_fold, imp_bigrams])))[["predictions"]])
+                   predict(model_cv, 
+                           data.frame(as.matrix(binary_ngrams[mer_df[["fold"]] == ith_fold, imp_bigrams])))[["predictions"]])
     
     preds[, c("source_peptide", "mer_id", "len_group", 
               "fold", "target", "acp", "amp", "neg")] 

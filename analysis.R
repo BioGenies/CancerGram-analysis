@@ -34,8 +34,8 @@ source("./functions/degenerate_ngrams.R")
 data(aaindex)
 
 analysis_CancerGram <- drake_plan(gathered_data = gather_raw_data(),
-                                  raw_data = read_raw_data(),
-                                  cdhit_data = filter_cdhit(raw_data),
+                                  raw_data = read_raw_data("./data/all_ACPs.fasta"),
+                                  cdhit_data = filter_cdhit(raw_data, 0.9),
                                   negative_data = read_and_cut(data_path, lengths(cdhit_data)),
                                   cdhit_data_ids = generate_holdout_groups(cdhit_data),
                                   negative_data_ids = generate_holdout_groups(negative_data),

@@ -9,9 +9,9 @@
 #' @param seqs list of input sequences
 #' @return list of sequences after filtering using CD-HIT
 
-filter_cdhit <- function(seqs) {
+filter_cdhit <- function(seqs, threshold) {
   standard_seqs <- seqs[["standard"]][which(lengths(seqs[["standard"]]) <= 50)]
-  cdhit_res <- cdhit(standard_seqs, thresh = 0.90)
+  cdhit_res <- cdhit(standard_seqs, thresh = threshold)
   print(paste0("Number of sequences after cd-hit: ", length(cdhit_res)))
   standard_seqs[cdhit_res] 
 }
