@@ -9,6 +9,7 @@ library(tidyr)
 library(cvTools)
 library(measures)
 library(pbapply)
+library(seqinr)
 
 if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {
   data_path <- "/home/kasia/Dropbox/Projekty/BioNgramProjects/CancerGram/"
@@ -58,11 +59,11 @@ benchmark_first_models <- drake_plan(
   amp_filtered_data_ids = generate_holdout_groups(amp_filtered_data),
   neg_data_ids = generate_holdout_groups(neg_data),
   benchmark_file = write_benchmark_mc(acp = cdhit_acp_data,
-                                   acp_id = cdhit_acp_data_ids,
-                                   amp = amp_filtered_data,
-                                   amp_id = amp_filtered_data_ids,
-                                   neg = neg_data,
-                                   neg_id = neg_data_ids),
+                                      acp_id = cdhit_acp_data_ids,
+                                      amp = amp_filtered_data,
+                                      amp_id = amp_filtered_data_ids,
+                                      neg = neg_data,
+                                      neg_id = neg_data_ids),
   mer_df_mc = get_mers_mc(acp = cdhit_acp_data,
                           acp_id = cdhit_acp_data_ids,
                           amp = amp_filtered_data,
@@ -70,9 +71,9 @@ benchmark_first_models <- drake_plan(
                           neg = neg_data,
                           neg_id = neg_data_ids),
   ngrams_mc = count_and_gather_ngrams(mer_df_mc,
-                                          c(1, rep(2, 4), rep(3, 4)),
-                                          list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
-  cv_raw_mc = do_cv_mc(mer_df_mc, binary_ngrams, 0.05),
+                                      c(1, rep(2, 4), rep(3, 4)),
+                                      list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
+  cv_raw_mc = do_cv_mc(mer_df_mc, ngrams_mc, 0.05),
   benchmark_mc = write_benchmark_mc(acp = cdhit_acp_data,
                                     acp_id = cdhit_acp_data_ids,
                                     amp = amp_filtered_data,
@@ -99,8 +100,7 @@ benchmark_first_models <- drake_plan(
                                                         grepl("dbAMP", source_peptide) ~ "amp",
                                                         grepl("CancerPPD|AP|DRAMP", source_peptide) ~ "acp"))),
   benchmark_peptide_preds_mc = cbind(benchmark_stats_mc[, c("source_peptide", "target")],
-                                     predict(peptide_model_mc,
-                                             select(benchmark_stats_mc, -source_peptide))[["predictions"]]),
+                                     predict(peptide_model_mc, benchmark_stats_mc)[["predictions"]]),
   
   # Multiclass model on AntiCP datasets
   mers_mc_anticp = mutate(mer_df_from_list_len_group(c(pos_train_main, neg_train_main, neg_train_alt)),
@@ -132,8 +132,7 @@ benchmark_first_models <- drake_plan(
                                                                grepl("neg_test_main", source_peptide) ~ "amp",
                                                                grepl("neg_test_alternate", source_peptide) ~ "neg"))),
   benchmark_peptide_preds_mc_anticp = cbind(benchmark_stats_mc_anticp[, c("source_peptide", "target")],
-                                            predict(peptide_model_mc_anticp,
-                                                    select(benchmark_stats_mc_anticp, -source_peptide))[["predictions"]]),
+                                            predict(peptide_model_mc_anticp, benchmark_stats_mc_anticp)[["predictions"]]),
   ### Binary models mers + peptides 
   # ACP/non-ACP our datasets
   mers_acp_neg = mutate(filter(mer_df_mc, target %in% c("acp", "neg")),
@@ -146,16 +145,18 @@ benchmark_first_models <- drake_plan(
   mer_preds_acp_neg = mutate(mers_acp_neg,
                              pred = predict(mer_model_acp_neg, 
                                             data.frame(as.matrix(ngrams_acp_neg[, imp_ngrams_acp_neg])))[["predictions"]][, "TRUE"]),
-  stats_acp_neg = calculate_statistics(mer_preds_acp_neg),
+  stats_acp_neg = mutate(calculate_statistics(mer_preds_acp_neg),
+                         target = factor(ifelse(grepl("CUTTED", source_peptide), FALSE, TRUE))),
   peptide_model_acp_neg = train_model_peptides(stats_acp_neg),
   benchmark_mers_acp_neg = filter(benchmark_mers_mc, grepl("CancerPPD|AP|DRAMP|CUTTED", source_peptide)),
   benchmark_ngrams_acp_neg = count_imp_ngrams(benchmark_mers_acp_neg, imp_ngrams_acp_neg),
   benchmark_mer_preds_acp_neg = mutate(benchmark_mers_acp_neg,
                                        pred = predict(mer_model_acp_neg, 
                                                       data.frame(as.matrix(benchmark_ngrams_acp_neg[, imp_ngrams_acp_neg])))[["predictions"]][, "TRUE"]),
-  benchmark_stats_acp_neg = calculate_statistics(benchmark_mer_preds_acp_neg),
-  benchmark_peptide_preds_acp_neg = cbind(benchmark_stats_acp_neg[, c("source_peptide", "target")],
-                                          pred = predict(peptide_model_acp_neg, benchmark_stats_acp_neg)[["predictions"]][, "TRUE"]),
+  benchmark_stats_acp_neg = mutate(calculate_statistics(benchmark_mer_preds_acp_neg),
+                                   target = factor(ifelse(grepl("CUTTED", source_peptide), FALSE, TRUE))),
+  benchmark_peptide_preds_acp_neg = mutate(benchmark_stats_acp_neg[, c("source_peptide", "target")],
+                                           pred = predict(peptide_model_acp_neg, benchmark_stats_acp_neg)[["predictions"]][, "TRUE"]),
   
   # ACP/AMP our datasets
   mers_acp_amp = mutate(filter(mer_df_mc, target %in% c("acp", "amp")),
@@ -168,16 +169,18 @@ benchmark_first_models <- drake_plan(
   mer_preds_acp_amp = mutate(mers_acp_amp,
                              pred = predict(mer_model_acp_amp, 
                                             data.frame(as.matrix(ngrams_acp_amp[, imp_ngrams_acp_amp])))[["predictions"]][, "TRUE"]),
-  stats_acp_amp = calculate_statistics(mer_preds_acp_amp),
+  stats_acp_amp = mutate(calculate_statistics(mer_preds_acp_amp),
+                         target = factor(ifelse(grepl("dbAMP", source_peptide), FALSE, TRUE))),
   peptide_model_acp_amp = train_model_peptides(stats_acp_amp),
   benchmark_mers_acp_amp = filter(benchmark_mers_mc, grepl("CancerPPD|AP|DRAMP|dbAMP", source_peptide)),
   benchmark_ngrams_acp_amp = count_imp_ngrams(benchmark_mers_acp_amp, imp_ngrams_acp_amp),
   benchmark_mer_preds_acp_amp = mutate(benchmark_mers_acp_amp,
                                        pred = predict(mer_model_acp_amp, 
                                                       data.frame(as.matrix(benchmark_ngrams_acp_amp[, imp_ngrams_acp_amp])))[["predictions"]][, "TRUE"]),
-  benchmark_stats_acp_amp = calculate_statistics(benchmark_mer_preds_acp_amp),
-  benchmark_peptide_preds_acp_amp = cbind(benchmark_stats_acp_amp[, c("source_peptide", "target")],
-                                          pred = predict(peptide_model_acp_amp, benchmark_stats_acp_amp)[["predictions"]][, "TRUE"]),
+  benchmark_stats_acp_amp = mutate(calculate_statistics(benchmark_mer_preds_acp_amp),
+                                   target = factor(ifelse(grepl("dbAMP", source_peptide), FALSE, TRUE))),
+  benchmark_peptide_preds_acp_amp = mutate(benchmark_stats_acp_amp[, c("source_peptide", "target")],
+                                           pred = predict(peptide_model_acp_amp, benchmark_stats_acp_amp)[["predictions"]][, "TRUE"]),
   
   # ACP/non-ACP AntiCP datasets
   mers_acp_neg_anticp = mutate(mer_df_from_list_len_group(c(pos_train_alt, neg_train_alt)),
@@ -190,17 +193,19 @@ benchmark_first_models <- drake_plan(
   mer_preds_acp_neg_anticp = mutate(mers_acp_neg_anticp,
                                     pred = predict(mer_model_acp_neg_anticp, 
                                                    data.frame(as.matrix(ngrams_acp_neg_anticp[, imp_ngrams_acp_neg_anticp])))[["predictions"]][, "TRUE"]),
-  stats_acp_neg_anticp = calculate_statistics(mer_preds_acp_neg_anticp),
+  stats_acp_neg_anticp = mutate(calculate_statistics(mer_preds_acp_neg_anticp),
+                                target = ifelse(grepl("pos", source_peptide), TRUE, FALSE)),
   peptide_model_acp_neg_anticp = train_model_peptides(stats_acp_neg_anticp),
   benchmark_mers_acp_neg_anticp = mutate(mer_df_from_list_len_group(c(pos_test_alt, neg_test_alt)),
-                                         target = ifelse(grepl("pos", source_peptide), TRUE, FALSE)),
+                                         target = factor(ifelse(grepl("pos", source_peptide), TRUE, FALSE))),
   benchmark_ngrams_acp_neg_anticp = count_imp_ngrams(benchmark_mers_acp_neg_anticp, imp_ngrams_acp_neg_anticp),
   benchmark_mer_preds_acp_neg_anticp = mutate(benchmark_mers_acp_neg_anticp,
                                               pred = predict(mer_model_acp_neg_anticp, 
                                                              data.frame(as.matrix(benchmark_ngrams_acp_neg_anticp[, imp_ngrams_acp_neg_anticp])))[["predictions"]][, "TRUE"]),
-  benchmark_stats_acp_neg_anticp = calculate_statistics(benchmark_mer_preds_acp_neg_anticp),
-  benchmark_peptide_preds_acp_neg_anticp = cbind(benchmark_stats_acp_neg_anticp[, c("source_peptide", "target")],
-                                                 pred = predict(peptide_model_acp_neg_anticp, benchmark_stats_acp_neg_anticp)[["predictions"]][, "TRUE"]),
+  benchmark_stats_acp_neg_anticp = mutate(calculate_statistics(benchmark_mer_preds_acp_neg_anticp),
+                                          target = factor(ifelse(grepl("neg", source_peptide), FALSE, TRUE))),
+  benchmark_peptide_preds_acp_neg_anticp = mutate(benchmark_stats_acp_neg_anticp[, c("source_peptide", "target")],
+                                                  pred = predict(peptide_model_acp_neg_anticp, benchmark_stats_acp_neg_anticp)[["predictions"]][, "TRUE"]),
   
   # ACP/AMP AntiCP datasets
   mers_acp_amp_anticp = mutate(mer_df_from_list_len_group(c(pos_train_main, neg_train_main)),
@@ -213,17 +218,19 @@ benchmark_first_models <- drake_plan(
   mer_preds_acp_amp_anticp = mutate(mers_acp_amp_anticp,
                                     pred = predict(mer_model_acp_amp_anticp, 
                                                    data.frame(as.matrix(ngrams_acp_amp_anticp[, imp_ngrams_acp_amp_anticp])))[["predictions"]][, "TRUE"]),
-  stats_acp_amp_anticp = calculate_statistics(mer_preds_acp_amp_anticp),
+  stats_acp_amp_anticp = mutate(calculate_statistics(mer_preds_acp_amp_anticp),
+                                target = factor(ifelse(grepl("pos", source_peptide), TRUE, FALSE))),
   peptide_model_acp_amp_anticp = train_model_peptides(stats_acp_amp_anticp),
   benchmark_mers_acp_amp_anticp = mutate(mer_df_from_list_len_group(c(pos_test_main, neg_test_main)),
-                                         target = ifelse(grepl("pos", source_peptide), TRUE, FALSE)),
+                                         target = factor(ifelse(grepl("pos", source_peptide), TRUE, FALSE))),
   benchmark_ngrams_acp_amp_anticp = count_imp_ngrams(benchmark_mers_acp_amp_anticp, imp_ngrams_acp_amp_anticp),
   benchmark_mer_preds_acp_amp_anticp = mutate(benchmark_mers_acp_amp_anticp,
                                               pred = predict(mer_model_acp_amp_anticp, 
                                                              data.frame(as.matrix(benchmark_ngrams_acp_amp_anticp[, imp_ngrams_acp_amp_anticp])))[["predictions"]][, "TRUE"]),
-  benchmark_stats_acp_amp_anticp = calculate_statistics(benchmark_mer_preds_acp_amp_anticp),
-  benchmark_peptide_preds_acp_amp_anticp = cbind(benchmark_stats_acp_amp_anticp[, c("source_peptide", "target")],
-                                                 pred = predict(peptide_model_acp_amp_anticp, benchmark_stats_acp_amp_anticp)[["predictions"]][, "TRUE"])
+  benchmark_stats_acp_amp_anticp = mutate(calculate_statistics(benchmark_mer_preds_acp_amp_anticp),
+                                          target = factor(ifelse(grepl("pos", source_peptide), TRUE, FALSE))),
+  benchmark_peptide_preds_acp_amp_anticp = mutate(benchmark_stats_acp_amp_anticp[, c("source_peptide", "target")],
+                                                  pred = predict(peptide_model_acp_amp_anticp, benchmark_stats_acp_amp_anticp)[["predictions"]][, "TRUE"])
 )
 
 make(benchmark_first_models, seed = 2938, cache = new_cache("benchmark_cache"))

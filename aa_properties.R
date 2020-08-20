@@ -168,3 +168,33 @@ ggplot(prop_dat, aes(x = seq_type, y = value, fill = seq_type)) +
   #geom_point(data = acp_neg, position = "jitter")
   geom_point(data = acp_amp, position = "jitter")
 
+
+
+### Mitochondrial ACPs
+mito_ACPs <- read_fasta("data/mito_ACPs.fasta")
+acp <- readd(cdhit_acp_data)
+amp <- readd(amp_filtered_data)
+neg <- readd(neg_data)
+
+props <- c("BULH740102", "TAKK010101", "AURR980114", "CHOP780101", "GEIM800101",
+           "GEIM800108", "FAUJ880110", "SNEP660104", "RACS820101", "FAUJ880108", 
+           "ARGP820101", "OOBM850104", "KLEP840101")
+
+seq_list <- list(mito_ACP = mito_ACPs, acp = c(acp, pos_test_main, pos_test_main),
+                 amp = c(amp, neg_train_main, neg_test_main), neg = c(neg, neg_train_alt, neg_test_alt))
+prop_vals <- lapply(names(seq_list), function(ith_seq_type) {
+  print(paste(ith_seq_type))
+  lapply(props, function(ith_prop_type) {
+    data.frame(prop_type = ith_prop_type, 
+               seq_type = ith_seq_type,
+               value = encode_seq(seq_list[[ith_seq_type]], ith_prop_type),
+               stringsAsFactors = FALSE)
+  }) %>% bind_rows()
+}) %>% bind_rows()
+
+ggplot(prop_vals, aes(x = seq_type, y = value, fill = seq_type)) +
+  geom_violin() +
+  facet_wrap(~prop_type, scales = "free_y") +
+  geom_point(data = filter(prop_vals, seq_type == "mito_ACP"), color = "black", position = "jitter") +
+    scale_fill_manual("seq_type", values = c(acp = "#d73027", amp = "#fc8d59", neg = "#91bfdb", mito_ACP = "#f5da56"))
+  
