@@ -203,7 +203,7 @@ benchmark_first_models <- drake_plan(
                                               pred = predict(mer_model_acp_neg_anticp, 
                                                              data.frame(as.matrix(benchmark_ngrams_acp_neg_anticp[, imp_ngrams_acp_neg_anticp])))[["predictions"]][, "TRUE"]),
   benchmark_stats_acp_neg_anticp = mutate(calculate_statistics(benchmark_mer_preds_acp_neg_anticp),
-                                          target = factor(ifelse(grepl("neg", source_peptide), FALSE, TRUE))),
+                                          target = factor(ifelse(grepl("pos", source_peptide), TRUE, FALSE))),
   benchmark_peptide_preds_acp_neg_anticp = mutate(benchmark_stats_acp_neg_anticp[, c("source_peptide", "target")],
                                                   pred = predict(peptide_model_acp_neg_anticp, benchmark_stats_acp_neg_anticp)[["predictions"]][, "TRUE"]),
   
