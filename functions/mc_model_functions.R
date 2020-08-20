@@ -46,8 +46,8 @@ get_mers_mc <- function(acp, acp_id, amp, amp_id, neg, neg_id) {
 }  
 
 
-write_benchmark_mc <- function(pos, pos_id, amp, amp_id, neg, neg_id) {
-  seq_list <- c(pos[unlist(lapply(pos_id, function(ith_len_group) ith_len_group[["benchmark"]]))],
+write_benchmark_mc <- function(acp, acp_id, amp, amp_id, neg, neg_id) {
+  seq_list <- c(acp[unlist(lapply(acp_id, function(ith_len_group) ith_len_group[["benchmark"]]))],
                 amp[unlist(lapply(amp_id, function(ith_len_group) ith_len_group[["benchmark"]]))],
                 neg[unlist(lapply(neg_id, function(ith_len_group) ith_len_group[["benchmark"]]))]) 
   write_fasta(seq_list, file = "results/benchmark_mc.fasta") 
@@ -116,7 +116,7 @@ calculate_statistics_mc <- function(mer_preds, groups) {
   res <- lapply(groups, function(i) {
     calculate_statistics_single(mer_preds, i)
   }) %>% do.call(cbind, .) 
-  res <- res[,!duplicated(colnames(res))] %>% 
+  res[,!duplicated(colnames(res))] %>% 
     select(-c("amp_n_peptide", "neg_n_peptide"))
 } 
 
@@ -156,7 +156,7 @@ do_cv_mc <- function(mer_df, binary_ngrams, cutoff) {
                    predict(model_cv, 
                            data.frame(as.matrix(binary_ngrams[mer_df[["fold"]] == ith_fold, imp_bigrams])))[["predictions"]])
     
-    preds[, c("source_peptide", "mer_id", "len_group", 
+    preds[, c("source_peptide", "mer_id", 
               "fold", "target", "acp", "amp", "neg")] 
   }) %>% bind_rows()
 }
