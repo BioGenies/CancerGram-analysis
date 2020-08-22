@@ -39,58 +39,7 @@ train_model_peptides <- function(mer_statistics) {
              "frac_0.6_0.8", "frac_0.8_1"))
   model_cv <- ranger(dependent.variable.name = "target", data = train_dat, 
                      write.forest = TRUE, probability = TRUE, num.trees = 500, 
-                     verbose = FALSE, classification = TRUE, seed = 990)
+                     verbose = FALSE, classification = TRUE)
   model_cv
 }
 
-
-test_alphabet <- function(alphabet_file) {
-  dat <- read.csv(alphabet_file, stringsAsFactors = FALSE)
-  learner_groups <- list(`[11,19]` = 1L:175315, `(19,26]` = 175315L:350630, `[11,19]_(19,26]` = 350631L:525945)
-  lapply(1L:length(learner_groups), function(i) {
-    stats <- dat[learner_groups[[i]],] %>% 
-      calculate_statistics() 
-    lapply(1L:5, function(ith_fold) {
-      test_dat <- filter(stats, fold == ith_fold)
-      trained_model <- train_model_peptides(filter(stats, fold != ith_fold))
-      preds <- mutate(test_dat,
-                      pred = predict(trained_model, 
-                                     data.frame(test_dat))[["predictions"]][, "TRUE"],
-                      train_group = names(learner_groups[i]),
-                      alphabet = dat[["alphabet"]][1])
-    }) %>% bind_rows()
-  }) %>% bind_rows()
-}
-
-
-test_all_alphabets <- function(data_path, alphabets) {
-  lapply(alphabets, function(ith_alphabet) {
-    test_alphabet(paste0(data_path, "results/", ith_alphabet, ".csv"))
-  }) %>% bind_rows()
-}
-
-calc_measures_alphabets <- function(alphabets_preds) {
-  alphabets_preds <- mutate(alphabets_preds, 
-                            len_group = cut(n_peptide + 9, breaks = c(11, 19, 26, 36, 60, 710),
-                                            include.lowest = TRUE))
-  lapply(unique(alphabets_preds[["alphabet"]]), function(ith_alphabet) {
-    lapply(unique(alphabets_preds[["train_group"]]), function(ith_train_group) {
-      lapply(unique(alphabets_preds[["fold"]]), function(ith_fold) {
-        lapply(unique(alphabets_preds[["len_group"]]), function(ith_group) {
-          dat <- filter(alphabets_preds, fold == ith_fold & train_group == ith_train_group & alphabet == ith_alphabet & 
-                          len_group == ith_group) %>% 
-            mutate(decision = as.factor(ifelse(pred >= 0.5, "TRUE", "FALSE")))
-          data.frame(alphabet = ith_alphabet,
-                     train_group = ith_train_group,
-                     fold = ith_fold,
-                     len_group = ith_group,
-                     AUC = mlr3measures::auc(dat[["target"]], dat[["pred"]], "TRUE"),
-                     MCC = mlr3measures::mcc(dat[["target"]], dat[["decision"]], "TRUE"),
-                     precision = mlr3measures::precision(dat[["target"]], dat[["decision"]], "TRUE"),
-                     sensitivity = mlr3measures::sensitivity(dat[["target"]], dat[["decision"]], "TRUE"),
-                     specificity = mlr3measures::specificity(dat[["target"]], dat[["decision"]], "TRUE"))
-        }) %>% bind_rows()
-      }) %>% bind_rows()
-    }) %>% bind_rows()
-  }) %>% bind_rows()
-}
