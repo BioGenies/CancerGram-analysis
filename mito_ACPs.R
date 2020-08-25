@@ -6,7 +6,9 @@ library(ranger)
 source("functions/get_mers.R")
 source("functions/mc_model_functions.R")
 source("functions/train_model_peptides.R")
+source("functions/benchmark_functions.R")
 
+# Loading targets required for prediction
 loadd(c(peptide_model_mc_anticp, imp_ngrams_mc_anticp, mer_model_mc_anticp, 
         imp_ngrams_mc, mer_model_mc, peptide_model_mc), 
       path = "benchmark_cache")
@@ -23,6 +25,12 @@ predict_mito_ACPs <- function(mers, imp_ngrams, mer_model, peptide_model) {
   return(list("mer_predictions" = mer_preds, "peptide_predictions" = peptide_preds))
 }
 
-our_datasets_res <- predict_mito_ACPs(mers, imp_ngrams_mc, mer_model_mc, peptide_model_mc)
-anticp_datasets_res <- predict_mito_ACPs(mers, imp_ngrams_mc_anticp, mer_model_mc_anticp, peptide_model_mc_anticp)
+# Performing predictions
+our_datasets_res <- predict_mito_ACPs(mers, imp_ngrams_mc, mer_model_mc, peptide_model_mc) %>% 
+  setNames(c("source_peptide", "acp", "amp", "neg"))
+anticp_datasets_res <- predict_mito_ACPs(mers, imp_ngrams_mc_anticp, mer_model_mc_anticp, peptide_model_mc_anticp) %>% 
+  setNames(c("source_peptide", "acp", "amp", "neg"))
+
+write.csv(our_datasets_res[["peptide_predictions"]], "./results/mito_ACPs_preds_our_datasets.csv", row.names = FALSE)
+write.csv(anticp_datasets_res[["peptide_predictions"]], "./results/mito_ACPs_preds_anticp_datasets.csv", row.names = FALSE)
 
