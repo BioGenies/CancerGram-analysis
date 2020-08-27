@@ -219,7 +219,7 @@ get_prop_vals_plot <- function(seq_list, props, mito_data, seq_set) {
 }
 
 seq_list_our <- list(mito_ACP = mito_ACPs, acp = acp, amp = amp, neg = neg)
-seq_list_anticp <- list(mito_ACP = mito_ACPs, acp = c(pos_test_main, pos_test_main), amp = c(neg_train_main, neg_test_main),
+seq_list_anticp <- list(mito_ACP = mito_ACPs, acp = c(pos_test_main, pos_train_main), amp = c(neg_train_main, neg_test_main),
                         neg = c(neg_train_alt, neg_test_alt))
 
 get_prop_vals_plot(seq_list_our, props, mito_data, "our") +

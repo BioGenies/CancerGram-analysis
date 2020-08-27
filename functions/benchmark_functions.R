@@ -8,8 +8,8 @@ train_model_mers <- function(train_mer_df, train_binary_ngrams, imp_bigrams) {
   ranger_train_data <- data.frame(as.matrix(train_binary_ngrams[, imp_bigrams]),
                                   tar = as.factor(train_mer_df[["target"]]))
   model_mer <- ranger(dependent.variable.name = "tar", data = ranger_train_data, 
-                                write.forest = TRUE, probability = TRUE, num.trees = 2000, 
-                                verbose = FALSE)
+                      write.forest = TRUE, probability = TRUE, num.trees = 2000, 
+                      verbose = FALSE)
   model_mer
 }
 
@@ -92,7 +92,7 @@ get_metrics <- function(preds, cutoff, dataset_name) {
     mutate(dataset = dataset_name,
            cutoff = cutoff)
 }
-
+  
 # Processing AntiCP sequence files
 process_sequences <- function(seq_file) {
   seqs <- readLines(paste0("./data/", seq_file))
@@ -101,3 +101,21 @@ process_sequences <- function(seq_file) {
     setNames(paste0(strsplit(seq_file, ".", fixed = TRUE)[[1]][1], "_", 1:length(seqs)))
   named_seqs[lengths(named_seqs) >= 5]
 }
+
+
+get_validation_dataset <- function() {
+  
+  benchmark_our <- read_fasta("./results/benchmark_mc.fasta")
+  benchmark_anticp <- c(neg_test_main, neg_test_alt, pos_test_main)
+  
+  traintest_acp <- sapply(names(cdhit_acp_data_ids), function(x) cdhit_acp_data[cdhit_acp_data_ids[[x]][["benchmark"]]])
+  traintest_amp <- sapply(names(amp_filtered_data_ids), function(x) amp_filtered_data[amp_filtered_data_ids[[x]][["benchmark"]]])
+  traintest_neg <- sapply(names(neg_data_ids), function(x) neg_data[neg_data_ids[[x]][["benchmark"]]]) 
+  
+  traintest_our <- unlist(c(traintest_acp, traintest_amp, traintest_neg), recursive = FALSE) 
+  traintest_anticp <- c(neg_train_main, neg_train_alt, pos_train_main)
+  
+  c(benchmark_anticp[which(!(benchmark_anticp %in% traintest_our))],
+    benchmark_our[which(!(benchmark_our %in% traintest_anticp))])
+}
+  

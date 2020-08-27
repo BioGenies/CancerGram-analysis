@@ -230,7 +230,35 @@ benchmark_first_models <- drake_plan(
   benchmark_stats_acp_amp_anticp = mutate(calculate_statistics(benchmark_mer_preds_acp_amp_anticp),
                                           target = factor(ifelse(grepl("pos", source_peptide), TRUE, FALSE))),
   benchmark_peptide_preds_acp_amp_anticp = mutate(benchmark_stats_acp_amp_anticp[, c("source_peptide", "target")],
-                                                  pred = predict(peptide_model_acp_amp_anticp, benchmark_stats_acp_amp_anticp)[["predictions"]][, "TRUE"])
+                                                  pred = predict(peptide_model_acp_amp_anticp, benchmark_stats_acp_amp_anticp)[["predictions"]][, "TRUE"]),
+  
+  # Create validation dataset composed of both our and AntiCP benchmark datasets to compare multiclass models:
+  validation_dataset = get_validation_dataset(),
+  validation_mer_df = mutate(mer_df_from_list_len_group(c(pos_train_main, neg_train_main, neg_train_alt)),
+                             target = case_when(grepl("pos_test_main|Cancer|AP|DRAMP", source_peptide) ~ "acp",
+                                                grepl("neg_test_main|dbAMP", source_peptide) ~ "amp",
+                                                grepl("neg_test_alternate|CUTTED", source_peptide) ~ "neg")),
+  validation_anticp_ngrams = count_imp_ngrams(validation_mer_df, imp_ngrams_mc_anticp),
+  validation_anticp_mer_preds = cbind(validation_mer_df, 
+                                   predict(mer_model_mc_anticp, 
+                                           as.matrix(validation_anticp_ngrams))[["predictions"]]),
+  validation_anticp_stats = mutate(calculate_statistics_mc(validation_anticp_mer_preds,  c("acp", "amp", "neg")),
+                                   target = case_when(grepl("pos_test_main|Cancer|AP|DRAMP", source_peptide) ~ "acp",
+                                                      grepl("neg_test_main|dbAMP", source_peptide) ~ "amp",
+                                                      grepl("neg_test_alternate|CUTTED", source_peptide) ~ "neg")),
+  validation_anticp_peptide_preds = cbind(validation_anticp_stats[, c("source_peptide", "target")],
+                                            predict(peptide_model_mc_anticp, validation_anticp_stats)[["predictions"]]),
+  validation_our_ngrams = count_imp_ngrams(validation_mer_df, imp_ngrams_mc),
+  validation_our_mer_preds = cbind(validation_mer_df, 
+                                      predict(mer_model_mc, 
+                                              as.matrix(validation_our_ngrams))[["predictions"]]),
+  validation_our_stats = mutate(calculate_statistics_mc(validation_our_mer_preds,  c("acp", "amp", "neg")),
+                                   target = case_when(grepl("pos_test_main|Cancer|AP|DRAMP", source_peptide) ~ "acp",
+                                                      grepl("neg_test_main|dbAMP", source_peptide) ~ "amp",
+                                                      grepl("neg_test_alternate|CUTTED", source_peptide) ~ "neg")),
+  validation_our_peptide_preds = cbind(validation_our_stats[, c("source_peptide", "target")],
+                                          predict(peptide_model_mc, validation_our_stats)[["predictions"]])
+  
 )
 
 make(benchmark_first_models, seed = 2938, cache = new_cache("benchmark_cache"))
@@ -260,7 +288,7 @@ all_res <- lapply(1:length(res_list), function(i) {
   mutate(res_list[[i]], model = names(res_list)[i])
 }) %>% bind_rows()
 
-
+    
 mutate(all_res, target = factor(target),
        decision = factor(ifelse(pred > 0.5, TRUE, FALSE))) %>% 
   group_by(model) %>% 
