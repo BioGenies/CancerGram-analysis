@@ -119,8 +119,8 @@ benchmark_first_models <- drake_plan(
                                                            target = factor(case_when(grepl("pos_train_main", source_peptide) ~ "acp",
                                                                                      grepl("neg_train_main", source_peptide) ~ "amp",
                                                                                      grepl("neg_train_alternate", source_peptide) ~ "neg")))),
-  benchmark_mers_mc_anticp = mutate(mer_df_from_list_len_group(c(pos_test_main, neg_test_main, neg_test_alt)),
-                                    target = factor(case_when(grepl("pos_test_main", source_peptide) ~ "acp",
+  benchmark_mers_mc_anticp = mutate(mer_df_from_list_len_group(c(pos_test_main, neg_test_main, pos_test_alt, neg_test_alt)),
+                                    target = factor(case_when(grepl("pos_test", source_peptide) ~ "acp",
                                                               grepl("neg_test_main", source_peptide) ~ "amp",
                                                               grepl("neg_test_alternate", source_peptide) ~ "neg"))),
   benchmark_ngrams_mc_anticp = count_imp_ngrams(benchmark_mers_mc_anticp, imp_ngrams_mc_anticp),
@@ -128,7 +128,7 @@ benchmark_first_models <- drake_plan(
                                         predict(mer_model_mc_anticp, 
                                                 as.matrix(benchmark_ngrams_mc_anticp))[["predictions"]]),
   benchmark_stats_mc_anticp = mutate(calculate_statistics_mc(benchmark_mer_preds_mc_anticp, c("acp", "amp", "neg")),
-                                     target = factor(case_when(grepl("pos_test_main", source_peptide) ~ "acp",
+                                     target = factor(case_when(grepl("pos_test", source_peptide) ~ "acp",
                                                                grepl("neg_test_main", source_peptide) ~ "amp",
                                                                grepl("neg_test_alternate", source_peptide) ~ "neg"))),
   benchmark_peptide_preds_mc_anticp = cbind(benchmark_stats_mc_anticp[, c("source_peptide", "target")],
@@ -234,7 +234,7 @@ benchmark_first_models <- drake_plan(
   
   # Create validation dataset composed of both our and AntiCP benchmark datasets to compare multiclass models:
   validation_dataset = get_validation_dataset(),
-  validation_mer_df = mutate(mer_df_from_list_len_group(c(pos_train_main, neg_train_main, neg_train_alt)),
+  validation_mer_df = mutate(mer_df_from_list_len_group(validation_dataset),
                              target = case_when(grepl("pos_test_main|Cancer|AP|DRAMP", source_peptide) ~ "acp",
                                                 grepl("neg_test_main|dbAMP", source_peptide) ~ "amp",
                                                 grepl("neg_test_alternate|CUTTED", source_peptide) ~ "neg")),
