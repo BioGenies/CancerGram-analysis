@@ -119,3 +119,32 @@ get_validation_dataset <- function() {
     benchmark_our[which(!(benchmark_our %in% traintest_anticp))])
 }
   
+
+
+get_decision_mc <- function(preds) {
+  mutate(preds, decision = case_when(acp > amp & acp > neg  ~ "acp",
+                                     amp > acp & amp > neg ~ "amp",
+                                     neg > amp & neg > acp ~ "neg"))
+}
+
+calc_performance <- function(preds) {
+  acp_amp <- filter(preds, grepl("test_main|train_main", source_peptide)) %>% 
+    mutate(decision = factor(ifelse(acp >= 0.5, TRUE, FALSE)),
+           target = factor(ifelse(target == "acp", TRUE, FALSE)))
+  acp_neg <- filter(preds, grepl("test_alt|train_alt", source_peptide)) %>% 
+    mutate(decision = factor(ifelse(acp >= 0.5, TRUE, FALSE)),
+           target = factor(ifelse(target == "acp", TRUE, FALSE)))
+  datasets <- list("ACP/AMP" = acp_amp, "ACP/neg" = acp_neg)
+  lapply(names(datasets), function(ith_set) {
+    predictions <- datasets[[ith_set]]
+    data.frame(
+      dataset = ith_set,
+      AUC = mlr3measures::auc(predictions[["target"]], predictions[["acp"]], "TRUE"),
+      MCC = mlr3measures::mcc(predictions[["target"]], predictions[["decision"]], "TRUE"),
+      Precision = mlr3measures::precision(predictions[["target"]], predictions[["decision"]], "TRUE"),
+      Sensitivity = mlr3measures::sensitivity(predictions[["target"]], predictions[["decision"]], "TRUE"),
+      Specificity = mlr3measures::specificity(predictions[["target"]], predictions[["decision"]], "TRUE"),
+      Accuracy = mlr3measures::acc(predictions[["target"]], predictions[["decision"]]),
+      stringsAsFactors = FALSE)
+  }) %>% bind_rows()
+}
