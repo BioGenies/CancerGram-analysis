@@ -18,6 +18,9 @@ source("functions/train_model_peptides.R")
 source("functions/benchmark_functions.R")
 source("functions/publication_functions.R")
 
+if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {
+  data_path <- "/home/kasia/Dropbox/Projekty/BioNgramProjects/CancerGram/publication_files/"
+}
   
 # This drake plan requires targets generated in AntiCP_benchmark.R script by running 
 # benchmark_first_models drake plan. 
@@ -36,8 +39,8 @@ publication_results <- drake_plan(
   cv_mer_performance_measures_0.001 = calc_cv_performance(cv_mer_mc_anticp_0.001),
   cv_peptide_perfromance_measures_0.05 = calc_cv_performance(cv_peptide_mc_anticp),
   cv_peptide_perfromance_measures_0.001 = calc_cv_performance(cv_peptide_mc_anticp_0.001),  
-  cv_mer_table = get_cv_pred_table(cv_mer_performance_measures_0.05),
-  cv_peptide_table = get_cv_pred_table(cv_peptide_perfromance_measures_0.05)
+  cv_mer_table = get_cv_pred_table(cv_mer_performance_measures_0.05, paste0(data_path, "cv_mer_results")),
+  cv_peptide_table = get_cv_pred_table(cv_peptide_perfromance_measures_0.05, paste0(data_path, "cv_peptide_results"))
 )
 
 make(publication_results, seed = 2938, cache = new_cache("publication_cache"))
