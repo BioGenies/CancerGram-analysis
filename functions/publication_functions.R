@@ -43,7 +43,9 @@ predict_mito_ACPs <- function(mito_acp_file, imp_ngrams, mer_model, peptide_mode
 
 
 get_mito_ACP_pred_table <- function(mito_ACP_preds) {
-  res <- mito_ACP_preds[["peptide_predictions"]]
+  res <- mito_ACP_preds[["peptide_predictions"]] %>% 
+    data.frame(stringsAsFactors=FALSE) %>%
+    mutate_at(vars(acp, amp, neg), ~round(as.numeric(.), 3))
   colnames(res) <- c("Peptide", "ACP", "AMP", "Negative")
   write.csv(res, paste0(data_path, "mito_ACP_preds.csv"), row.names = FALSE)
   xtable(res, caption = "Fig:mito_ACP_preds", label = "", align = "ccccc") %>% 

@@ -46,7 +46,8 @@ publication_results <- drake_plan(
   cv_table = get_cv_pred_table(cv_mer_performance_measures_0.05, cv_peptide_perfromance_measures_0.05),
   datasets_table = get_datasets_table(pos_train_main, pos_test_main, neg_train_main, neg_test_main, neg_train_alt, neg_test_alt),
   mito_ACP_preds = predict_mito_ACPs("data/mito_ACPs.fasta", imp_ngrams_mc_anticp, 
-                                     mer_model_mc_anticp, peptide_model_mc_anticp)
+                                     mer_model_mc_anticp, peptide_model_mc_anticp),
+  mito_ACP_table = get_mito_ACP_pred_table(mito_ACP_preds)
 )
 
 make(publication_results, seed = 2938, cache = new_cache("publication_cache"))
