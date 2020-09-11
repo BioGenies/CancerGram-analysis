@@ -26,7 +26,8 @@ if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {
 # benchmark_first_models drake plan. 
 
 loadd(c(mer_df_mc, ngrams_mc, mers_mc_anticp, ngrams_mc_anticp,
-        benchmark_peptide_preds_mc_anticp), 
+        benchmark_peptide_preds_mc_anticp, pos_train_main, pos_test_main, 
+        neg_train_main, neg_test_main, neg_train_alt, neg_test_alt), 
       path = "benchmark_cache")
 
 
@@ -40,7 +41,8 @@ publication_results <- drake_plan(
   cv_peptide_perfromance_measures_0.05 = calc_cv_performance(cv_peptide_mc_anticp),
   cv_peptide_perfromance_measures_0.001 = calc_cv_performance(cv_peptide_mc_anticp_0.001),  
   cv_mer_table = get_cv_pred_table(cv_mer_performance_measures_0.05, paste0(data_path, "cv_mer_results")),
-  cv_peptide_table = get_cv_pred_table(cv_peptide_perfromance_measures_0.05, paste0(data_path, "cv_peptide_results"))
+  cv_peptide_table = get_cv_pred_table(cv_peptide_perfromance_measures_0.05, paste0(data_path, "cv_peptide_results")),
+  datasets_table = get_datasets_table(pos_train_main, pos_test_main, neg_train_main, neg_test_main, neg_train_alt, neg_test_alt)
 )
 
 make(publication_results, seed = 2938, cache = new_cache("publication_cache"))
