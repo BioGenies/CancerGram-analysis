@@ -188,26 +188,14 @@ do_cv_peptides_mc <- function(cv_mer_res) {
 
 
 calc_cv_performance <- function(preds) {
-  lapply(unique(preds[["fold"]]), function(ith_fold){
-    acp_amp <- filter(preds, grepl("train_main", source_peptide) & fold == ith_fold) %>% 
-      mutate(decision = factor(ifelse((acp > amp & acp > neg), "TRUE", "FALSE")),
-             target = factor(ifelse(target == "acp", "TRUE", "FALSE")))
-    acp_neg <- filter(preds, grepl("pos_train_main|neg_train_alt", source_peptide) & fold == ith_fold) %>% 
-      mutate(decision = factor(ifelse((acp > amp & acp > neg), "TRUE", "FALSE")),
-             target = factor(ifelse(target == "acp", "TRUE", "FALSE")))
-    datasets <- list("ACP/AMP" = acp_amp, "ACP/neg" = acp_neg)
-    lapply(names(datasets), function(ith_set) {
-      predictions <- datasets[[ith_set]]
-      data.frame(
-        dataset = ith_set,
-        fold = ith_fold,
-        AUC = mlr3measures::auc(predictions[["target"]], predictions[["acp"]], "TRUE"),
-        MCC = mlr3measures::mcc(predictions[["target"]], predictions[["decision"]], "TRUE"),
-        Precision = mlr3measures::precision(predictions[["target"]], predictions[["decision"]], "TRUE"),
-        Sensitivity = mlr3measures::sensitivity(predictions[["target"]], predictions[["decision"]], "TRUE"),
-        Specificity = mlr3measures::specificity(predictions[["target"]], predictions[["decision"]], "TRUE"),
-        Accuracy = mlr3measures::acc(predictions[["target"]], predictions[["decision"]]),
-        stringsAsFactors = FALSE)
-    }) %>% bind_rows()
+  res <- get_decision_mc(preds)
+  lapply(unique(res[["fold"]]), function(ith_fold) {
+    dat <- filter(res, fold == ith_fold)
+    data.frame(
+      fold = ith_fold,
+      Accuracy = ACC(dat[["target"]], dat[["decision"]]),
+      AU1U = multiclass.AU1U(dat[, c("acp", "amp", "neg")], dat[["target"]]),
+      Kappa = KAPPA(dat[["target"]], dat[["decision"]]),
+      stringsAsFactors = FALSE)
   }) %>% bind_rows()
 }

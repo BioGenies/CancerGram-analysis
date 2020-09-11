@@ -1,17 +1,20 @@
-get_cv_pred_table <- function(cv_performance, outfile_name) {
-  tab <- cv_performance %>% 
-    pivot_longer(AUC:Accuracy, names_to = "Measure", values_to = "Value") %>% 
-    group_by(dataset, Measure) %>%
+get_cv_pred_table <- function(cv_mer_performance, cv_peptide_performance) {
+  tab <- mutate(cv_mer_performance,
+                Layer = "Mer") %>% 
+    bind_rows(mutate(cv_peptide_performance,
+                     Layer = "Peptide")) %>% 
+    pivot_longer(Accuracy:kappa, names_to = "Measure", values_to = "Value") %>% 
+    group_by(Layer, Measure) %>%
     summarise(mean = mean(Value),
               sd = sd(Value)) %>% 
     mutate(value = paste0(round(mean, 2), " (+/-", round(sd, 3), ")")) %>% 
     select(-c(mean, sd)) %>%
-    pivot_wider(names_from = dataset, values_from = value)
-  write.csv(tab, paste0(outfile_name, ".csv"), row.names = FALSE)
+    pivot_wider(names_from = Measure, values_from = value)
+  write.csv(tab, paste0(data_path, "cv_results.csv"), row.names = FALSE)
     xtable(tab, caption = "", label = "", align = "cccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
           caption.placement = "top", label.placement = "top") %>% 
-      writeLines(paste0(outfile_name, ".txt"))
+      writeLines(paste0(data_path, "cv_results.txt"))
 }
 
 get_datasets_table <- function(acp_train, acp_test, amp_train, amp_test, neg_train, neg_test) {
