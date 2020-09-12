@@ -71,7 +71,7 @@ calc_prop_values <- function(seq_list, prop_vec) {
 }
 
 get_prop_plot <- function(seq_list, prop_vec) {
-  calc_prop_values(seq_list, prop_vec) %>% 
+  p <- calc_prop_values(seq_list, prop_vec) %>% 
     group_by(prop_type) %>% 
     mutate(row = row_number()) %>% 
     pivot_wider(names_from = prop_type, values_from = value) %>% 
@@ -79,6 +79,7 @@ get_prop_plot <- function(seq_list, prop_vec) {
     stat_density_2d(aes(alpha = ..level..), geom = "polygon", color = "black", size = 0.4) +
     scale_fill_manual("Dataset", values = c("#ed463d", "#ffc745", "#c3dae8")) +
     facet_wrap(~seq_type) +
-    guides(alpha = FALSE) %>% 
-    ggsave(., paste0(data_path, "prop_plot.eps"), device = cairo_ps, height = 6, width = 8)
+    guides(alpha = FALSE)
+  ggsave(plot = p, filename = paste0(data_path, "prop_plot.eps"), device = cairo_ps, height = 6, width = 9)
+  p
 }
