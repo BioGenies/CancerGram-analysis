@@ -1,15 +1,15 @@
 get_cv_pred_table <- function(cv_mer_performance, cv_peptide_performance) {
   tab <- mutate(cv_mer_performance,
-                Layer = "Mer") %>% 
+                Layer = "Mer layer") %>% 
     bind_rows(mutate(cv_peptide_performance,
-                     Layer = "Peptide")) %>% 
+                     Layer = "Peptide layer")) %>% 
     pivot_longer(Accuracy:Kappa, names_to = "Measure", values_to = "Value") %>% 
     group_by(Layer, Measure) %>%
     summarise(mean = mean(Value),
               sd = sd(Value)) %>% 
     mutate(value = paste0(round(mean, 2), " (+/-", round(sd, 3), ")")) %>% 
     select(-c(mean, sd)) %>%
-    pivot_wider(names_from = Measure, values_from = value)
+    pivot_wider(names_from = Layer, values_from = value)
   write.csv(tab, paste0(data_path, "cv_results.csv"), row.names = FALSE)
     xtable(tab, caption = "", label = "", align = "ccccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
@@ -54,3 +54,31 @@ get_mito_ACP_pred_table <- function(mito_ACP_preds) {
     writeLines(paste0(data_path, "mito_ACP_preds.txt"))
 }
 
+encode_seq <- function(x, property) {
+  sapply(x, function(ith_seq) {
+    mean(aaprop[property, tolower(ith_seq)])
+  })
+}
+
+calc_prop_values <- function(seq_list, prop_vec) {
+  lapply(names(prop_vec), function(ith_prop_type) {
+    lapply(names(seq_list), function(ith_seq_type) {
+      data.frame(seq_type = ith_seq_type, prop_type = ith_prop_type, 
+                 value = encode_seq(seq_list[[ith_seq_type]], prop_vec[ith_prop_type]),
+                 stringsAsFactors = FALSE)
+    }) %>% bind_rows
+  }) %>% bind_rows()
+}
+
+get_prop_plot <- function(seq_list, prop_vec) {
+  calc_prop_values(seq_list, prop_vec) %>% 
+    group_by(prop_type) %>% 
+    mutate(row = row_number()) %>% 
+    pivot_wider(names_from = prop_type, values_from = value) %>% 
+    ggplot(aes(x = `Hydropathy index (Kyte-Doolittle, 1982)`, y = `Net charge (Klein et al., 1984)`, fill = seq_type)) +
+    stat_density_2d(aes(alpha = ..level..), geom = "polygon", color = "black", size = 0.4) +
+    scale_fill_manual("Dataset", values = c("#ed463d", "#ffc745", "#c3dae8")) +
+    facet_wrap(~seq_type) +
+    guides(alpha = FALSE) %>% 
+    ggsave(., paste0(data_path, "prop_plot.eps"), device = cairo_ps, height = 6, width = 8)
+}
