@@ -48,6 +48,7 @@ publication_results <- drake_plan(
   mito_ACP_preds = predict_mito_ACPs("data/mito_ACPs.fasta", imp_ngrams_mc_anticp, 
                                      mer_model_mc_anticp, peptide_model_mc_anticp),
   mito_ACP_table = get_mito_ACP_pred_table(mito_ACP_preds),
+  mito_ACP_data_table = get_mito_ACP_data_table("data/mitochondrial_ACPs_table.csv"),
   property_plot = get_prop_plot(list("ACP" = pos_train_main, "AMP" = neg_train_main, "neg" = neg_train_alt),
                                 c("Hydropathy index (Kyte-Doolittle, 1982)" = "KYTJ820101", 
                                   "Net charge (Klein et al., 1984)" = "KLEP840101"))

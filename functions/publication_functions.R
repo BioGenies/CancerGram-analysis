@@ -11,7 +11,7 @@ get_cv_pred_table <- function(cv_mer_performance, cv_peptide_performance) {
     select(-c(mean, sd)) %>%
     pivot_wider(names_from = Layer, values_from = value)
   write.csv(tab, paste0(data_path, "cv_results.csv"), row.names = FALSE)
-    xtable(tab, caption = "", label = "", align = "ccccc") %>% 
+  xtable(tab, caption = "", label = "", align = "cccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
           caption.placement = "top", label.placement = "top") %>% 
       writeLines(paste0(data_path, "cv_results.txt"))
@@ -79,7 +79,17 @@ get_prop_plot <- function(seq_list, prop_vec) {
     stat_density_2d(aes(alpha = ..level..), geom = "polygon", color = "black", size = 0.4) +
     scale_fill_manual("Dataset", values = c("#ed463d", "#ffc745", "#c3dae8")) +
     facet_wrap(~seq_type) +
-    guides(alpha = FALSE)
-  ggsave(plot = p, filename = paste0(data_path, "prop_plot.eps"), device = cairo_ps, height = 6, width = 9)
+    guides(alpha = FALSE) +
+    theme_bw()
+  ggsave(plot = p, filename = paste0(data_path, "prop_plot.eps"), device = cairo_ps, height = 4, width = 6)
   p
+}
+
+get_mito_ACP_data_table <- function(filename) {
+  tab <- read.csv(filename, stringsAsFactors = FALSE)
+  write.csv(tab, paste0(data_path, "mito_ACP_data_table.csv"), row.names = FALSE)
+  xtable(tab, caption = "", label = "", align = "ccccc") %>% 
+    print(include.rownames = FALSE, booktabs = TRUE,
+          caption.placement = "top", label.placement = "top") %>% 
+    writeLines(paste0(data_path, "mito_ACP_data_table.txt"))
 }
