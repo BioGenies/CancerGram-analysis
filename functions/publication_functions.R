@@ -45,10 +45,13 @@ predict_mito_ACPs <- function(mito_acp_file, imp_ngrams, mer_model, peptide_mode
 get_mito_ACP_pred_table <- function(mito_ACP_preds) {
   res <- mito_ACP_preds[["peptide_predictions"]] %>% 
     data.frame(stringsAsFactors=FALSE) %>%
+    mutate(Decision = case_when(acp > amp & acp > neg  ~ "ACP",
+                                       amp > acp & amp > neg ~ "AMP",
+                                       neg > amp & neg > acp ~ "Negative")) %>% 
     mutate_at(vars(acp, amp, neg), ~round(as.numeric(.), 3))
-  colnames(res) <- c("Peptide", "ACP", "AMP", "Negative")
+  colnames(res) <- c("Peptide", "ACP", "AMP", "Negative", "Decision")
   write.csv(res, paste0(data_path, "mito_ACP_preds.csv"), row.names = FALSE)
-  xtable(res, caption = "Fig:mito_ACP_preds", label = "", align = "ccccc") %>% 
+  xtable(res, caption = "", label = "Fig:mito_ACP_preds", align = "cccccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
           caption.placement = "top", label.placement = "top") %>% 
     writeLines(paste0(data_path, "mito_ACP_preds.txt"))
@@ -80,16 +83,62 @@ get_prop_plot <- function(seq_list, prop_vec) {
     scale_fill_manual("Dataset", values = c("#ed463d", "#ffc745", "#c3dae8")) +
     facet_wrap(~seq_type) +
     guides(alpha = FALSE) +
-    theme_bw()
-  ggsave(plot = p, filename = paste0(data_path, "prop_plot.eps"), device = cairo_ps, height = 4, width = 6)
+    theme_bw() +
+    theme(legend.position = "bottom")
+  ggsave(plot = p, filename = paste0(data_path, "prop_plot.eps"), device = cairo_ps, height = 5, width = 8)
   p
 }
 
 get_mito_ACP_data_table <- function(filename) {
   tab <- read.csv(filename, stringsAsFactors = FALSE)
   write.csv(tab, paste0(data_path, "mito_ACP_data_table.csv"), row.names = FALSE)
-  xtable(tab, caption = "", label = "", align = "ccccc") %>% 
+  xtable(tab, caption = "", label = "", align = "cccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
           caption.placement = "top", label.placement = "top") %>% 
     writeLines(paste0(data_path, "mito_ACP_data_table.txt"))
+}
+
+
+get_benchmark_table <- function(benchmark_res) {
+  dat <- get_decision_mc(benchmark_res)
+  res <- data.frame(Accuracy = ACC(dat[["target"]], dat[["decision"]]),
+                    AU1U = multiclass.AU1U(dat[, c("acp", "amp", "neg")], dat[["target"]]),
+                    Kappa = KAPPA(dat[["target"]], dat[["decision"]]),
+                    stringsAsFactors = FALSE) %>% 
+    pivot_longer(Accuracy:Kappa, names_to = "Measure", values_to = "Value")
+  write.csv(res, paste0(data_path, "benchmark_res.csv"), row.names = FALSE)
+  xtable(tab, caption = "", label = "Tab:benchmark", align = "ccc") %>% 
+    print(include.rownames = FALSE, booktabs = TRUE,
+          caption.placement = "top", label.placement = "top") %>% 
+    writeLines(paste0(data_path, "benchmark_res.txt"))
+}
+
+
+get_imp_ngrams_plot <- function(imp_ngrams_dat) {
+  res <- lapply(names(imp_ngrams_dat), function(ith_comb) {
+    all <- paste0(imp_ngrams_dat[[ith_comb]], collapse = "")
+    aa <- gsub("1|2|3|0|_", "", all)
+    aa <- gsub(".", "", aa, fixed = TRUE)
+    data.frame(table(strsplit(aa, "")), stringsAsFactors = FALSE) %>% 
+      mutate(Freq = Freq/nchar(aa),
+             comb = ith_comb)
+  }) %>% bind_rows() 
+  colnames(res) <- c("Amino acid", "Frequency", "Comparison")
+  
+  p <- ggplot(res, aes(x = `Amino acid`, y = Frequency, fill = Comparison)) +
+    geom_col(position = "dodge") +
+    scale_fill_manual("Comparison", values = c("#ed463d", "#ffc745", "#c3dae8"), 
+                      labels = c("ACP/AMP", "ACP/Negative", "AMP/Negative")) +
+    theme_bw() +
+    theme(legend.position = "bottom")
+  ggsave(plot = p, filename = paste0(data_path, "ngram_plot.eps"), device = cairo_ps, height = 5, width = 9)
+}
+
+
+get_cv_plot <- function(cv_perf) {
+  p <- pivot_longer(cv_perf, Accuracy:Kappa, names_to = "Measure", values_to = "Value") %>% 
+    ggplot(aes(x = Measure, y = Value)) +
+    geom_point() +
+    theme_bw()
+  ggsave(plot = p, filename = paste0(data_path, "cv_plot.eps"), device = cairo_ps, height = 4, width = 6)
 }

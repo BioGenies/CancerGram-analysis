@@ -30,7 +30,8 @@ if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {
 loadd(c(mer_df_mc, ngrams_mc, mers_mc_anticp, ngrams_mc_anticp,
         benchmark_peptide_preds_mc_anticp, pos_train_main, pos_test_main, 
         neg_train_main, neg_test_main, neg_train_alt, neg_test_alt,
-        imp_ngrams_mc_anticp, mer_model_mc_anticp, peptide_model_mc_anticp), 
+        imp_ngrams_mc_anticp, imp_ngrams_dat_mc_anticp,
+        mer_model_mc_anticp, peptide_model_mc_anticp), 
       path = "benchmark_cache")
 
 
@@ -49,9 +50,12 @@ publication_results <- drake_plan(
                                      mer_model_mc_anticp, peptide_model_mc_anticp),
   mito_ACP_table = get_mito_ACP_pred_table(mito_ACP_preds),
   mito_ACP_data_table = get_mito_ACP_data_table("data/mitochondrial_ACPs_table.csv"),
-  property_plot = get_prop_plot(list("ACP" = pos_train_main, "AMP" = neg_train_main, "neg" = neg_train_alt),
+  property_plot = get_prop_plot(list("ACP" = pos_train_main, "AMP" = neg_train_main, "Negative" = neg_train_alt),
                                 c("Hydropathy index (Kyte-Doolittle, 1982)" = "KYTJ820101", 
-                                  "Net charge (Klein et al., 1984)" = "KLEP840101"))
+                                  "Net charge (Klein et al., 1984)" = "KLEP840101")),
+  benchmark_table = get_benchmark_table(benchmark_peptide_preds_mc_anticp),
+  ngram_plot = get_imp_ngrams_plot(imp_ngrams_dat_mc_anticp),
+  cv_plot = get_cv_plot(cv_peptide_performance_measures_0.05)
 )
 
 make(publication_results, seed = 2938, cache = new_cache("publication_cache"))
