@@ -107,7 +107,7 @@ get_benchmark_table <- function(benchmark_res) {
                     stringsAsFactors = FALSE) %>% 
     pivot_longer(Accuracy:Kappa, names_to = "Measure", values_to = "Value")
   write.csv(res, paste0(data_path, "benchmark_res.csv"), row.names = FALSE)
-  xtable(tab, caption = "", label = "Tab:benchmark", align = "ccc") %>% 
+  xtable(res, caption = "", label = "Tab:benchmark", align = "ccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
           caption.placement = "top", label.placement = "top") %>% 
     writeLines(paste0(data_path, "benchmark_res.txt"))
