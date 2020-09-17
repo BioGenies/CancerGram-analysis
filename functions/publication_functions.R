@@ -127,7 +127,7 @@ get_imp_ngrams_plot <- function(imp_ngrams_dat) {
   
   p <- ggplot(res, aes(x = `Amino acid`, y = Frequency, fill = Comparison)) +
     geom_col(position = "dodge") +
-    scale_fill_manual("Comparison", values = c("#ed463d", "#ffc745", "#c3dae8"), 
+    scale_fill_manual("Comparison", values = c("#f0a87a", "#c7bae1", "#b9dfc8"), 
                       labels = c("ACP/AMP", "ACP/Negative", "AMP/Negative")) +
     theme_bw() +
     theme(legend.position = "bottom")
