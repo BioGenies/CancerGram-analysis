@@ -21,7 +21,7 @@ get_datasets_table <- function(acp_train, acp_test, amp_train, amp_test, neg_tra
   df <- data.frame(Dataset = c("Train-test", "Benchmark"),
              ACP = c(length(acp_train), length(acp_test)),
              AMP = c(length(amp_train), length(amp_test)),
-             neg = c(length(neg_train), length(neg_test)))
+             Negative = c(length(neg_train), length(neg_test)))
   write.csv(df, paste0(data_path, "datasets_table.csv"), row.names = FALSE)
   xtable(df, caption = "", label = "", align = "ccccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
@@ -139,6 +139,9 @@ get_cv_plot <- function(cv_perf) {
   p <- pivot_longer(cv_perf, Accuracy:Kappa, names_to = "Measure", values_to = "Value") %>% 
     ggplot(aes(x = Measure, y = Value)) +
     geom_point() +
-    theme_bw()
+    facet_wrap(~Measure, scales = "free_x") +
+    theme_bw() +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
   ggsave(plot = p, filename = paste0(data_path, "cv_plot.eps"), device = cairo_ps, height = 4, width = 6)
 }
