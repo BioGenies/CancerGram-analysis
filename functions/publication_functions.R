@@ -145,3 +145,22 @@ get_cv_plot <- function(cv_perf) {
           axis.ticks.x = element_blank())
   ggsave(plot = p, filename = paste0(data_path, "cv_plot.eps"), device = cairo_ps, height = 4, width = 6)
 }
+
+
+get_aa_comp_plot <- function(datasets) {
+  
+  res <- lapply(names(datasets), function(ith_dataset) {
+  aac <- data.frame(table(unlist(datasets[ith_dataset]))) %>% 
+    setNames(c("Amino acid", "Frequency")) 
+  mutate(aac, 
+         Frequency = Frequency/sum(Frequency),
+         Dataset = ith_dataset)
+  }) %>% bind_rows() 
+  
+  p <- ggplot(res, aes(x = `Amino acid`, y = Frequency, fill = Dataset)) +
+    geom_col(position = "dodge") +
+    scale_fill_manual("Dataset", values = c("#ed463d", "#ffc745", "#c3dae8")) +
+    theme_bw() +
+    theme(legend.position = "bottom")
+  ggsave(plot = p, filename = paste0(data_path, "aa_comp_plot.eps"), device = cairo_ps, height = 5, width = 9)
+}

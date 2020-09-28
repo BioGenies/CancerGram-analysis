@@ -55,7 +55,10 @@ publication_results <- drake_plan(
                                   "Net charge (Klein et al., 1984)" = "KLEP840101")),
   benchmark_table = get_benchmark_table(benchmark_peptide_preds_mc_anticp),
   ngram_plot = get_imp_ngrams_plot(imp_ngrams_dat_mc_anticp),
-  cv_plot = get_cv_plot(cv_peptide_performance_measures_0.05)
+  cv_plot = get_cv_plot(cv_peptide_performance_measures_0.05),
+  aa_comp_plot = get_aa_comp_plot(datasets = list("ACP" = c(pos_train_main, pos_test_main), 
+                                                  "AMP" = c(neg_train_main, neg_test_main), 
+                                                  "Negative" = c(neg_train_alt, neg_test_alt)))
 )
 
 make(publication_results, seed = 2938, cache = new_cache("publication_cache"))
