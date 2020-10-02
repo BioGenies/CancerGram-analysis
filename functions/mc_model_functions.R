@@ -137,6 +137,14 @@ train_mc_model_peptides <- function(mer_statistics) {
 }
 
 
+get_target <- function(df) {
+  mutate(df,
+         target = factor(case_when(grepl("pos_train_main|pos_test_main", source_peptide) ~ "acp",
+                                   grepl("neg_train_main|neg_test_main", source_peptide) ~ "amp",
+                                   grepl("neg_train_alternate|neg_test_alternate", source_peptide) ~ "neg")))
+}
+
+
 do_cv_mc <- function(mer_df, binary_ngrams, cutoff) {
   lapply(unique(mer_df[["fold"]]), function(ith_fold) {
     print(paste0(ith_fold))
