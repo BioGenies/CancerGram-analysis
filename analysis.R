@@ -57,21 +57,34 @@ analysis_CancerGram <- drake_plan(gathered_data = gather_raw_data(),
                                   neg_test_main = process_sequences("neg_test_main.txt"), # 2 sequences < 5 aa
                                   neg_train_alt = process_sequences("neg_train_alternate.txt"),
                                   neg_test_alt = process_sequences("neg_test_alternate.txt"),
-                                  mers_mc_anticp = mutate(mer_df_from_list_len_group(c(pos_train_main, neg_train_main, neg_train_alt)),
-                                                          target = case_when(grepl("pos_train_main", source_peptide) ~ "acp",
-                                                                             grepl("neg_train_main", source_peptide) ~ "amp",
-                                                                             grepl("neg_train_alternate", source_peptide) ~ "neg")),
-                                  ngrams_mc_anticp = count_and_gather_ngrams(mers_mc_anticp,
-                                                                             c(1, rep(2, 4), rep(3, 4)),
-                                                                             list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
-                                  alphabets = create_alphabets(c("BULH740102", "TAKK010101", "AURR980114", "CHOP780101", "GEIM800101",
-                                                                 "GEIM800108", "FAUJ880110", "SNEP660104", "RACS820101", "FAUJ880108", 
-                                                                 "ARGP820101", "OOBM850104", "KLEP840101")),
-                                  selected_features = get_selected_features(alphabets),
-                                  alphabets_part1 = unique(alphabets[["aagroups"]])[1:2100],
-                                  alphabets_part2 = unique(alphabets[["aagroups"]])[2101:length(unique(alphabets[["aagroups"]]))],
-                                  cv_degenerate = do_cv_degenerate(mers_mc_anticp, ngrams_mc_anticp, 
-                                                                   alphabets_part1, 0.01))
+                                  mer_df = mutate(mer_df_from_list_len_group(c(pos_train_main, neg_train_main, neg_train_alt)),
+                                                  target = case_when(grepl("pos_train_main", source_peptide) ~ "acp",
+                                                                     grepl("neg_train_main", source_peptide) ~ "amp",
+                                                                     grepl("neg_train_alternate", source_peptide) ~ "neg")),
+                                  ngrams = count_and_gather_ngrams(mer_df,
+                                                                   c(1, rep(2, 4), rep(3, 4)),
+                                                                   list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
+                                  imp_ngrams_dat = get_imp_ngrams_mc(ngrams, mer_df, 0.0001),
+                                  imp_ngrams = unique(unlist(unname(imp_ngrams_dat))),
+                                  mer_model = train_mc_model_mers(mer_df, ngrams, imp_ngrams),
+                                  mer_preds = cbind(mer_df, 
+                                                    predict(mer_model, 
+                                                            as.matrix(ngrams[, imp_ngrams]))[["predictions"]]),
+                                  stats = calculate_statistics_mc(mer_preds,  c("acp", "amp", "neg")),
+                                  peptide_model = train_mc_model_peptides(get_target(stats)),
+                                  benchmark_mer_df = get_target(mer_df_from_list_len_group(c(pos_test_main, neg_test_main, pos_test_alt, neg_test_alt))),
+                                  benchmark_ngrams = count_imp_ngrams(benchmark_mer_df, imp_ngrams),
+                                  benchmark_mer_preds = cbind(benchmark_mer_df, 
+                                                              predict(mer_model, 
+                                                                      as.matrix(benchmark_ngrams))[["predictions"]]),
+                                  benchmark_stats = get_target(calculate_statistics_mc(benchmark_mer_preds, c("acp", "amp", "neg"))),
+                                  benchmark_peptide_preds = cbind(benchmark_stats[, c("source_peptide", "target")],
+                                                                  predict(peptide_model, 
+                                                                          benchmark_stats)[["predictions"]]))
 
 
 make(analysis_CancerGram, seed = 2938)
+
+CancerGram_model <- list(rf_mers = mer_model, rf_peptides = peptide_model, imp_features = imp_ngrams)
+class(CancerGram_model) <- "cancergram_model"
+save(CancerGram_model, file = "./results/CancerGram_model.rda", compress = "xz", compression_level = 9)
