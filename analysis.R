@@ -69,7 +69,7 @@ analysis_CancerGram <- drake_plan(gathered_data = gather_raw_data(),
                                                             as.matrix(ngrams[, imp_ngrams]))[["predictions"]]),
                                   stats = calculate_statistics_mc(mer_preds,  c("acp", "amp", "neg")),
                                   peptide_model = train_mc_model_peptides(get_target(stats)),
-                                  benchmark_mer_df = get_target(mer_df_from_list_len_group(c(pos_test_main, neg_test_main, pos_test_alt, neg_test_alt))),
+                                  benchmark_mer_df = get_target(mer_df_from_list_len_group(c(pos_test_main, neg_test_main, neg_test_alt))),
                                   benchmark_ngrams = count_imp_ngrams(benchmark_mer_df, imp_ngrams),
                                   benchmark_mer_preds = cbind(benchmark_mer_df, 
                                                               predict(mer_model, 
@@ -82,6 +82,6 @@ analysis_CancerGram <- drake_plan(gathered_data = gather_raw_data(),
 
 make(analysis_CancerGram, seed = 2938)
 
-CancerGram_model <- list(rf_mers = mer_model, rf_peptides = peptide_model, imp_features = imp_ngrams)
+CancerGram_model <- list(rf_mers = loadd(mer_model), rf_peptides = loadd(peptide_model), imp_features = loadd(imp_ngrams))
 class(CancerGram_model) <- "cancergram_model"
 save(CancerGram_model, file = "./results/CancerGram_model.rda", compress = "xz", compression_level = 9)
