@@ -91,8 +91,9 @@ get_prop_plot <- function(seq_list, prop_vec) {
 
 get_mito_ACP_data_table <- function(filename) {
   tab <- read.csv(filename, stringsAsFactors = FALSE)
+  xtab <- mutate(tab, Reference = paste0("citep{", Reference, "}"))
   write.csv(tab, paste0(data_path, "mito_ACP_data_table.csv"), row.names = FALSE)
-  xtable(tab, caption = "", label = "", align = "cccc") %>% 
+  xtable(xtab, caption = "", label = "", align = "cccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
           caption.placement = "top", label.placement = "top") %>% 
     writeLines(paste0(data_path, "mito_ACP_data_table.txt"))

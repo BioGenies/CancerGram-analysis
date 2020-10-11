@@ -34,7 +34,7 @@ loadd(c(mer_df_mc, ngrams, imp_ngrams, imp_ngrams_dat, mer_model,
 
 
 publication_results <- drake_plan(
-  cv_mer = do_cv_mc(mers_df_mc, ngrams, 0.0001),
+  cv_mer = do_cv_mc(mer_df_mc, ngrams, 0.0001),
   cv_peptide = do_cv_peptides_mc(cv_mer),
   cv_mer_performance_measures = calc_cv_performance(cv_mer),
   cv_peptide_performance_measures = calc_cv_performance(cv_peptide),
