@@ -32,7 +32,7 @@ analysis_CancerGram <- drake_plan(pos_train_main = process_sequences("pos_train_
                                   neg_test_main = process_sequences("neg_test_main.txt"), # 2 sequences < 5 aa
                                   neg_train_alt = process_sequences("neg_train_alternate.txt"),
                                   neg_test_alt = process_sequences("neg_test_alternate.txt"),
-                                  mer_df_mc = get_target(mer_df_from_list_len_group(c(pos_train_main, neg_train_main, neg_train_alt))),
+                                  mer_df_mc = get_target(mer_df_from_list_len_group(list(pos_train_main, neg_train_main, neg_train_alt))),
                                   ngrams = count_and_gather_ngrams(mer_df_mc,
                                                                    c(1, rep(2, 4), rep(3, 4)),
                                                                    list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
@@ -46,7 +46,7 @@ analysis_CancerGram <- drake_plan(pos_train_main = process_sequences("pos_train_
                                                             as.matrix(ngrams[, imp_ngrams]))[["predictions"]]),
                                   stats = calculate_statistics_mc(mer_preds,  c("acp", "amp", "neg")),
                                   peptide_model = train_mc_model_peptides(get_target(stats)),
-                                  benchmark_mer_df = get_target(mer_df_from_list_len_group(c(pos_test_main, neg_test_main, neg_test_alt))),
+                                  benchmark_mer_df = get_target(mer_df_from_list(c(pos_test_main, neg_test_main, neg_test_alt))),
                                   benchmark_ngrams = count_imp_ngrams(benchmark_mer_df, imp_ngrams),
                                   benchmark_mer_preds = cbind(benchmark_mer_df, 
                                                               predict(mer_model, 
