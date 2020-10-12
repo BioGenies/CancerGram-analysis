@@ -3,7 +3,7 @@ get_cv_pred_table <- function(cv_mer_performance, cv_peptide_performance) {
                 Layer = "Mer layer") %>% 
     bind_rows(mutate(cv_peptide_performance,
                      Layer = "Peptide layer")) %>% 
-    pivot_longer(Accuracy:Kappa, names_to = "Measure", values_to = "Value") %>% 
+    pivot_longer(Accuracy:KapS, names_to = "Measure", values_to = "Value") %>% 
     group_by(Layer, Measure) %>%
     summarise(mean = mean(Value),
               sd = sd(Value)) %>% 
@@ -106,7 +106,7 @@ get_benchmark_table <- function(benchmark_res) {
                     AU1U = multiclass.AU1U(dat[, c("acp", "amp", "neg")], dat[["target"]]),
                     KapS = KAPPA(dat[["target"]], dat[["decision"]]),
                     stringsAsFactors = FALSE) %>% 
-    pivot_longer(Accuracy:Kappa, names_to = "Measure", values_to = "Value")
+    pivot_longer(Accuracy:KapS, names_to = "Measure", values_to = "Value")
   write.csv(res, paste0(data_path, "benchmark_res.csv"), row.names = FALSE)
   xtable(res, caption = "", label = "Tab:benchmark", align = "ccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
@@ -137,7 +137,7 @@ get_imp_ngrams_plot <- function(imp_ngrams_dat) {
 
 
 get_cv_plot <- function(cv_perf) {
-  p <- pivot_longer(cv_perf, Accuracy:Kappa, names_to = "Measure", values_to = "Value") %>% 
+  p <- pivot_longer(cv_perf, Accuracy:KapS, names_to = "Measure", values_to = "Value") %>% 
     ggplot(aes(x = Measure, y = Value)) +
     geom_point() +
     facet_wrap(~Measure, scales = "free_x") +
@@ -168,9 +168,9 @@ get_aa_comp_plot <- function(datasets) {
 
 
 get_ngram_list <- function(imp_ngrams_dat) {
-  intersect(intersect(imp_ngrams_dat[["acp_amp"]][["ngram"]], 
-                      imp_ngrams_dat[["acp_neg"]][["ngram"]]),
-            imp_ngrams_dat[["amp_neg"]][["ngram"]]) %>% 
+  intersect(intersect(imp_ngrams_dat[["acp_amp"]], 
+                      imp_ngrams_dat[["acp_neg"]]),
+            imp_ngrams_dat[["amp_neg"]]) %>% 
     paste0(., collapse = ", ") %>% 
     writeLines(., paste0(data_path, "ngram_list.txt"))
 }
