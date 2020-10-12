@@ -30,31 +30,34 @@ mer_df_from_list <- function(seq_list) {
 
 #' Get mer data frame with length groups
 #' 
-#' Creates data frame of mers from a list of sequences, divides
-#' the sequences into equally distributed length groups and based
-#' on those groups performs classification into 5 folds.
-#' @param seq_list list of sequences
+#' Creates data frame of mers from a list of list of sequences, 
+#' divides the sequences into equally distributed length groups 
+#' and based on those groups performs classification into 5 folds.
+#' @param list_of_seq_list list of sequence lists
 #' @return data frame of mers with their source peptide, mer ID,
 #' length group and fold.
-mer_df_from_list_len_group <- function(seq_list) {
-  lens <- data.frame(source_peptide = names(seq_list),
-                     len_group = cut(lengths(seq_list),
-                                     breaks = as.numeric(quantile(lengths(seq_list), probs = seq(0, 1, 0.2))),
-                                     include.lowest = TRUE)) 
-  
-  lapply(unique(lens[["len_group"]]), function(ith_group_id) {
-    ith_group <- filter(lens, len_group == ith_group_id)[["source_peptide"]]
+mer_df_from_list_len_group <- function(list_of_seq_list) {
+  lapply(list_of_seq_list, function(ith_seq_list) {
     
-    folded <- cvFolds(length(ith_group), K = 5)
-    fold_df <- data.frame(source_peptide = ith_group[folded[["subsets"]]], 
-                          fold = folded[["which"]],
-                          stringsAsFactors = FALSE)
+    lens <- data.frame(source_peptide = names(ith_seq_list),
+                       len_group = cut(lengths(ith_seq_list),
+                                       breaks = as.numeric(quantile(lengths(ith_seq_list), probs = seq(0, 1, 0.2))),
+                                       include.lowest = TRUE)) 
     
-    mer_df <- left_join(mer_df_from_list(seq_list),
-                        lens, 
-                        by = "source_peptide") %>% 
-      inner_join(fold_df, by = c("source_peptide" = "source_peptide"))
-  }) %>% 
-    do.call(rbind, .)
+    lapply(unique(lens[["len_group"]]), function(ith_group_id) {
+      ith_group <- filter(lens, len_group == ith_group_id)[["source_peptide"]]
+      
+      folded <- cvFolds(length(ith_group), K = 5)
+      fold_df <- data.frame(source_peptide = ith_group[folded[["subsets"]]], 
+                            fold = folded[["which"]],
+                            stringsAsFactors = FALSE)
+      
+      mer_df <- left_join(mer_df_from_list(ith_seq_list),
+                          lens, 
+                          by = "source_peptide") %>% 
+        inner_join(fold_df, by = c("source_peptide" = "source_peptide"))
+    }) %>% 
+      do.call(rbind, .)
+  }) %>% bind_rows()
 }
 
