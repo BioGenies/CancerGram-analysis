@@ -1,3 +1,13 @@
+#' Get important ngrams from multiclass comparisons
+#' 
+#' This function performs feature selection using QuiPT for all
+#' binary combinations of target classes.
+#' @param ngrams binarized n-gram counts
+#' @param mer_df data frame of mers
+#' @param cutoff p-value treshold for QuiPT
+#' @return list of length equal to all possible combinations
+#' of target classes. Each element of a list is a \code{character}
+#' vector of informative n-grams for a comparison of two classes.
 get_imp_ngrams_mc <- function(ngrams, mer_df, cutoff = 0.05) {
   combns <- combn(unique(mer_df[["target"]]), 2, simplify = FALSE)
   lapply(combns, function(ith_cmbn) {

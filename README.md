@@ -2,7 +2,7 @@
 
 This repository contains data and code necessary to reproduce analysis from the article: Burdukiewicz, M., Sidorczuk, K., Rafacz, D., Pietluch, F., Bakala, M., Slowik, J. and Gagat, P. CancerGram: an effective classifier for differentiating anticancer from antimicrobial peptides.
 
-The analysis conducted in this article resulted in a predictor of antimicrobial peptides AmpGram, available as a *R* package and a web server (http://biongram.biotech.uni.wroc.pl/CancerGram/).
+The analysis conducted in this article resulted in a predictor of anticancer peptides CancerGram, available as a *R* package and a web server (http://biongram.biotech.uni.wroc.pl/CancerGram/).
 
 
 ## How to reproduce the main part of the analysis?
@@ -19,12 +19,12 @@ Run **publication_results.R**. This script requires data generated in the main a
 
 Data used in the main analysis: 
 
-* **pos_test_main.txt** - ACP sequences for validation dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153).
-* **neg_test_alternate.txt** - Negative sequences for validation dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153).
-* **neg_test_main.txt** - AMP sequences for validation dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153).
-* **pos_train_main.txt** - ACP sequences for training dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153).
-* **neg_train_alternate.txt** - Negative sequences for training dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153).
-* **neg_train_main.txt** - AMP sequences for training dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153).
+* **pos_test_main.txt** - ACP sequences for validation dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153)
+* **neg_test_alternate.txt** - Negative sequences for validation dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153)
+* **neg_test_main.txt** - AMP sequences for validation dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153)
+* **pos_train_main.txt** - ACP sequences for training dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153)
+* **neg_train_alternate.txt** - Negative sequences for training dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153)
+* **neg_train_main.txt** - AMP sequences for training dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153)
 
 Data used for the publication results:
 

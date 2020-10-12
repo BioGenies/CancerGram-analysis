@@ -1,6 +1,6 @@
 #' Create mer dataframe
 #' 
-#' Creates dataframe of 10-mers
+#' Creates dataframe of 5-mers
 #' @param seq matrix of sequences created by \code{\link{list2matrix}}
 #' @return dataframe of mers with their source peptide and mer ID
 create_mer_df <- function(seq) 
@@ -16,7 +16,11 @@ create_mer_df <- function(seq)
   }))
 
 
-
+#' Get mer data frame from sequence list
+#' 
+#' Creates data frame of mers from a list of sequences.
+#' @param seq_list list of sequences
+#' @return data frame of mers with their source peptide and mer ID
 mer_df_from_list <- function(seq_list) {
   seq_list %>% 
     list2matrix() %>% 
@@ -24,7 +28,14 @@ mer_df_from_list <- function(seq_list) {
 }
 
 
-
+#' Get mer data frame with length groups
+#' 
+#' Creates data frame of mers from a list of sequences, divides
+#' the sequences into equally distributed length groups and based
+#' on those groups performs classification into 5 folds.
+#' @param seq_list list of sequences
+#' @return data frame of mers with their source peptide, mer ID,
+#' length group and fold.
 mer_df_from_list_len_group <- function(seq_list) {
   lens <- data.frame(source_peptide = names(seq_list),
                      len_group = cut(lengths(seq_list),

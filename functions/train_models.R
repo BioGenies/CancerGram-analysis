@@ -1,3 +1,10 @@
+#' Train mer model
+#' 
+#' Train a multiclass model on mer level.
+#' @param mer_df data frame of mers
+#' @param binary_ngrams binarized n-gram occurences
+#' @param imp_bigrams \code{character} vector of informative n-grams
+#' @return random forest model of class \code{ranger}
 train_mc_model_mers <- function(mer_df, binary_ngrams, imp_bigrams) {
   ranger_train_data <- data.frame(as.matrix(binary_ngrams[, imp_bigrams]),
                                   tar = as.factor(mer_df[["target"]]))
@@ -8,7 +15,12 @@ train_mc_model_mers <- function(mer_df, binary_ngrams, imp_bigrams) {
 }
 
 
-
+#' Train peptide model
+#' 
+#' Train a multiclass model on peptide level.
+#' @param mer_statistics data frame of statistics calculated for mer 
+#' predictions using \link{\code{calculate_statistics_mc}}
+#' @return random forest model of class \code{ranger}
 train_mc_model_peptides <- function(mer_statistics) {
   if("fold" %in% colnames(mer_statistics)) {
     train_dat <- mer_statistics %>% 

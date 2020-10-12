@@ -1,3 +1,20 @@
+#' Do multiclass CV on mer level
+#' 
+#' This funtion performs k-fold cross-validation on a mer level.
+#' @param mer_df data frame of mers
+#' @param binary_ngrams binarized n-gram counts
+#' @param cutoff \code{numeric} value of cut-off used in QuiPT 
+#' @return a data frame with prediction results from cross-validation. Contains
+#' following columns: 
+#' \itemize{
+#'   \item{source_peptide}{name of a peptide}
+#'   \item{mer_id}{ID of a mer}
+#'   \item{fold}{number of a fold}
+#'   \item{target}{true class of a mer/peptide}
+#'   \item{acp}{prediction value that a given mer is ACP}
+#'   \item{amp}{prediction value that a given mer is AMP}
+#'   \item{neg}{prediction value that a given mer is negative}
+#' }
 do_cv_mc <- function(mer_df, binary_ngrams, cutoff) {
   lapply(unique(mer_df[["fold"]]), function(ith_fold) {
     print(paste0(ith_fold))
@@ -23,7 +40,20 @@ do_cv_mc <- function(mer_df, binary_ngrams, cutoff) {
   }) %>% bind_rows()
 }
 
-
+#' Do multiclass CV on peptide level
+#' 
+#' This funtion performs k-fold cross-validation on a peptide level.
+#' @param cv_mer_res results from the cross-validation on a mer level.
+#' @return a data frame with prediction results from cross-validation. Contains
+#' following columns: 
+#' \itemize{
+#'   \item{source_peptide}{name of a peptide}
+#'   \item{fold}{number of a fold}
+#'   \item{target}{true class of a mer/peptide}
+#'   \item{acp}{prediction value that a given mer is ACP}
+#'   \item{amp}{prediction value that a given mer is AMP}
+#'   \item{neg}{prediction value that a given mer is negative}
+#' }
 do_cv_peptides_mc <- function(cv_mer_res) {
   lapply(unique(cv_mer_res[["fold"]]), function(ith_fold) {
     print(paste0(ith_fold))
