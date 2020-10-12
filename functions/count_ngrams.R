@@ -18,3 +18,11 @@ count_and_gather_ngrams <- function(mer_df, k_list, gap_list) {
   res
 }
 
+
+
+count_imp_ngrams <- function(mer_df, imp_ngrams) {
+  mer_df[, grep("^X", colnames(mer_df))] %>% 
+    as.matrix() %>% 
+    count_specified(imp_ngrams) %>% 
+    binarize 
+}

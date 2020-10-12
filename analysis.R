@@ -17,41 +17,16 @@ if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {
   data_path <- "/home/kasia/Dropbox/Projekty/BioNgramProjects/CancerGram/"
 }
 
-source("./functions/raw_data.R")
-source("./functions/cdhit_data.R")
-source("./functions/nonstandard_AMPs.R")
-source("./functions/cutting_seqs.R")
-source("./functions/holdouts.R")
-source("./functions/writing_benchmarks.R")
+source("./functions/process_data.R")
 source("./functions/get_mers.R")
-source("./functions/count_ampgrams.R")
+source("./functions/count_ngrams.R")
 source("./functions/do_cv.R")
-source("./functions/train_model_peptides.R")
-source("./functions/mc_model_functions.R")
-source("./functions/get_selected_features.R")
-source("./functions/benchmark_functions.R")
-source("./functions/degenerate_ngrams.R")
-data(aaindex)
+source("./functions/get_imp_ngrams.R")
+source("./functions/train_models.R")
+source("./functions/calculate_statistics.R")
 
-analysis_CancerGram <- drake_plan(gathered_data = gather_raw_data(),
-                                  raw_data = read_raw_data("./data/all_ACPs.fasta"),
-                                  cdhit_data = filter_cdhit(raw_data, 0.9),
-                                  negative_data = read_and_cut(data_path, lengths(cdhit_data)),
-                                  cdhit_data_ids = generate_holdout_groups(cdhit_data),
-                                  negative_data_ids = generate_holdout_groups(negative_data),
-                                  benchmark_file = write_benchmark(pos = cdhit_data,
-                                                                   pos_id = cdhit_data_ids,
-                                                                   neg = negative_data,
-                                                                   neg_id = negative_data_ids),
-                                  mer_df = get_mers(pos = cdhit_data,
-                                                    pos_id = cdhit_data_ids,
-                                                    neg = negative_data,
-                                                    neg_id = negative_data_ids),
-                                  binary_ngrams = count_and_gather_ngrams(mer_df,
-                                                                          c(1, rep(2, 4), rep(3, 4)),
-                                                                          list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
-                                  cv_raw = do_cv(mer_df, binary_ngrams),
-                                  pos_train_main = process_sequences("pos_train_main.txt"), # 3 sequences < 5 aa
+
+analysis_CancerGram <- drake_plan(pos_train_main = process_sequences("pos_train_main.txt"), # 3 sequences < 5 aa
                                   pos_test_main = process_sequences("pos_test_main.txt"), # 1 sequence < 5 aa
                                   neg_train_main = process_sequences("neg_train_main.txt"), 
                                   neg_test_main = process_sequences("neg_test_main.txt"), # 2 sequences < 5 aa
@@ -61,6 +36,8 @@ analysis_CancerGram <- drake_plan(gathered_data = gather_raw_data(),
                                   ngrams = count_and_gather_ngrams(mer_df_mc,
                                                                    c(1, rep(2, 4), rep(3, 4)),
                                                                    list(NULL, NULL, 1, 2, 3, c(0,0), c(0,1), c(1,0), c(1,1))),
+                                  cv_mer = do_cv_mc(mer_df_mc, ngrams, 0.0001),
+                                  cv_peptide = do_cv_peptides_mc(cv_mer),
                                   imp_ngrams_dat = get_imp_ngrams_mc(ngrams, mer_df_mc, 0.0001),
                                   imp_ngrams = unique(unlist(unname(imp_ngrams_dat))),
                                   mer_model = train_mc_model_mers(mer_df_mc, ngrams, imp_ngrams),

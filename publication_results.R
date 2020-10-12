@@ -12,12 +12,13 @@ library(pbapply)
 library(seqinr)
 library(xtable)
 
-source("functions/mc_model_functions.R")
-source("functions/do_cv.R")
-source("functions/train_model_peptides.R")
-source("functions/benchmark_functions.R")
+source("./functions/get_mers.R")
+source("./functions/count_ngrams.R")
+source("./functions/do_cv.R")
+source("./functions/get_imp_ngrams.R")
+source("./functions/train_models.R")
+source("./functions/calculate_statistics.R")
 source("functions/publication_functions.R")
-source("functions/get_mers.R")
 
 
 if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {
@@ -30,12 +31,11 @@ if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {
 loadd(c(mer_df_mc, ngrams, imp_ngrams, imp_ngrams_dat, mer_model, 
         peptide_model, benchmark_mer_preds, benchmark_peptide_preds,
         pos_train_main, pos_test_main, neg_train_main, 
-        neg_test_main, neg_train_alt, neg_test_alt))
+        neg_test_main, neg_train_alt, neg_test_alt,
+        cv_mer, cv_peptide))
 
 
 publication_results <- drake_plan(
-  cv_mer = do_cv_mc(mer_df_mc, ngrams, 0.0001),
-  cv_peptide = do_cv_peptides_mc(cv_mer),
   cv_mer_performance_measures = calc_cv_performance(cv_mer),
   cv_peptide_performance_measures = calc_cv_performance(cv_peptide),
   cv_table = get_cv_pred_table(cv_mer_performance_measures, cv_peptide_performance_measures),

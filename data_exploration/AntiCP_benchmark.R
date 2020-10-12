@@ -17,18 +17,20 @@ if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {
 
 source("./functions/raw_data.R")
 source("./functions/cdhit_data.R")
-source("./functions/nonstandard_AMPs.R")
 source("./functions/cutting_seqs.R")
 source("./functions/holdouts.R")
 source("./functions/writing_benchmarks.R")
-source("./functions/get_mers.R")
+source("../functions/get_mers.R")
 source("./functions/do_cv.R")
-source("./functions/count_ampgrams.R")
-source("./functions/benchmark_functions.R")
+source("../functions/count_ngrams.R")
 source("./functions/holdouts.R")
-source("./functions/mc_model_functions.R")
+source("./functions/exploration_functions")
 source("./functions/writing_benchmarks.R")
-source("./functions/train_model_peptides.R")
+source("../functions/calculate_statistics.R")
+source("../functions/do_cv.R")
+source("../functions/get_imp_ngrams.R")
+source("../functions/process_data.R")
+source("../functions/train_models.R")
 
 benchmark_first_models <- drake_plan(
   # AntiCP datasets
@@ -49,7 +51,7 @@ benchmark_first_models <- drake_plan(
   
   # Multiclass model mers+peptides our datasets
   gathered_acp_data = gather_raw_data(),
-  raw_acp_data = read_raw_data("./data/all_ACPs.fasta"),
+  raw_acp_data = read_raw_data("../data/all_ACPs.fasta"),
   cdhit_acp_data = filter_cdhit(raw_acp_data, 0.95),
   raw_amp_data = read_amp_data(),
   cdhit_amp_data = filter_cdhit(raw_amp_data, 0.95),

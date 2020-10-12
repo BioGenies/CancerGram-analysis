@@ -1,3 +1,24 @@
+get_decision_mc <- function(preds) {
+  mutate(preds, decision = case_when(acp > amp & acp > neg  ~ "acp",
+                                     amp > acp & amp > neg ~ "amp",
+                                     neg > amp & neg > acp ~ "neg"))
+}
+
+calc_cv_performance <- function(preds) {
+  res <- get_decision_mc(preds)
+  lapply(unique(res[["fold"]]), function(ith_fold) {
+    dat <- filter(res, fold == ith_fold)
+    data.frame(
+      fold = ith_fold,
+      Accuracy = ACC(dat[["target"]], dat[["decision"]]),
+      AU1U = multiclass.AU1U(dat[, c("acp", "amp", "neg")], dat[["target"]]),
+      KapS = KAPPA(dat[["target"]], dat[["decision"]]),
+      stringsAsFactors = FALSE)
+  }) %>% bind_rows()
+}
+
+
+
 get_cv_pred_table <- function(cv_mer_performance, cv_peptide_performance) {
   tab <- mutate(cv_mer_performance,
                 Layer = "Mer layer") %>% 
