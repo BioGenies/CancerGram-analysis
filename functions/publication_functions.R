@@ -72,7 +72,7 @@ get_mito_ACP_pred_table <- function(mito_ACP_preds) {
     mutate_at(vars(acp, amp, neg), ~round(as.numeric(.), 3))
   colnames(res) <- c("Peptide", "ACP", "AMP", "Negative", "Decision")
   write.csv(res, paste0(data_path, "mito_ACP_preds.csv"), row.names = FALSE)
-  xtable(res, caption = "", label = "Fig:mito_ACP_preds", align = "cccccc") %>% 
+  xtable(res, caption = "", label = "Tab:mito_ACP_preds", align = "cccccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
           caption.placement = "top", label.placement = "top") %>% 
     writeLines(paste0(data_path, "mito_ACP_preds.txt"))
@@ -160,7 +160,7 @@ get_imp_ngrams_plot <- function(imp_ngrams_dat) {
 get_cv_plot <- function(cv_perf) {
   p <- pivot_longer(cv_perf, Accuracy:KapS, names_to = "Measure", values_to = "Value") %>% 
     ggplot(aes(x = Measure, y = Value)) +
-    geom_point() +
+    geom_point(position = "jitter") +
     facet_wrap(~Measure, scales = "free_x") +
     theme_bw() +
     theme(axis.text.x = element_blank(),

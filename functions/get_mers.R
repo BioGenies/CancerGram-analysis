@@ -28,7 +28,7 @@ mer_df_from_list <- function(seq_list) {
 mer_df_from_list_len_group <- function(seq_list) {
   lens <- data.frame(source_peptide = names(seq_list),
                      len_group = cut(lengths(seq_list),
-                                     breaks = c(5, 13, 17, 22, 28, 50),
+                                     breaks = as.numeric(quantile(lengths(seq_list), probs = seq(0, 1, 0.2))),
                                      include.lowest = TRUE)) 
   
   lapply(unique(lens[["len_group"]]), function(ith_group_id) {
