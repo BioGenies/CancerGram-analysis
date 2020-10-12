@@ -171,6 +171,7 @@ get_ngram_list <- function(imp_ngrams_dat) {
   intersect(intersect(imp_ngrams_dat[["acp_amp"]], 
                       imp_ngrams_dat[["acp_neg"]]),
             imp_ngrams_dat[["amp_neg"]]) %>% 
+    decode_ngrams() %>% 
     paste0(., collapse = ", ") %>% 
     writeLines(., paste0(data_path, "ngram_list.txt"))
 }
