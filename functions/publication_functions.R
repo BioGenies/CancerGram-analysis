@@ -104,7 +104,7 @@ get_benchmark_table <- function(benchmark_res) {
   dat <- get_decision_mc(benchmark_res)
   res <- data.frame(Accuracy = ACC(dat[["target"]], dat[["decision"]]),
                     AU1U = multiclass.AU1U(dat[, c("acp", "amp", "neg")], dat[["target"]]),
-                    Kappa = KAPPA(dat[["target"]], dat[["decision"]]),
+                    KapS = KAPPA(dat[["target"]], dat[["decision"]]),
                     stringsAsFactors = FALSE) %>% 
     pivot_longer(Accuracy:Kappa, names_to = "Measure", values_to = "Value")
   write.csv(res, paste0(data_path, "benchmark_res.csv"), row.names = FALSE)
@@ -164,4 +164,13 @@ get_aa_comp_plot <- function(datasets) {
     theme_bw() +
     theme(legend.position = "bottom")
   ggsave(plot = p, filename = paste0(data_path, "aa_comp_plot.eps"), device = cairo_ps, height = 5, width = 9)
+}
+
+
+get_ngram_list <- function(imp_ngrams_dat) {
+  intersect(intersect(imp_ngrams_dat[["acp_amp"]][["ngram"]], 
+                      imp_ngrams_dat[["acp_neg"]][["ngram"]]),
+            imp_ngrams_dat[["amp_neg"]][["ngram"]]) %>% 
+    paste0(., collapse = ", ") %>% 
+    writeLines(., paste0(data_path, "ngram_list.txt"))
 }

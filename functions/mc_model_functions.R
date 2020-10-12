@@ -203,7 +203,7 @@ calc_cv_performance <- function(preds) {
       fold = ith_fold,
       Accuracy = ACC(dat[["target"]], dat[["decision"]]),
       AU1U = multiclass.AU1U(dat[, c("acp", "amp", "neg")], dat[["target"]]),
-      Kappa = KAPPA(dat[["target"]], dat[["decision"]]),
+      KapS = KAPPA(dat[["target"]], dat[["decision"]]),
       stringsAsFactors = FALSE)
   }) %>% bind_rows()
 }
