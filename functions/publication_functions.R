@@ -111,7 +111,8 @@ get_prop_plot <- function(seq_list, prop_vec) {
 }
 
 get_mito_ACP_data_table <- function(filename) {
-  tab <- read.csv(filename, stringsAsFactors = FALSE)
+  tab <- read.csv(filename, stringsAsFactors = FALSE) %>% 
+    arrange(Peptide)
   xtab <- mutate(tab, Reference = paste0("citep{", Reference, "}"))
   write.csv(tab, paste0(data_path, "mito_ACP_data_table.csv"), row.names = FALSE)
   xtable(xtab, caption = "", label = "", align = "cccc") %>% 
