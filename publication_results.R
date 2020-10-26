@@ -17,8 +17,11 @@ source("./functions/count_ngrams.R")
 source("./functions/do_cv.R")
 source("./functions/get_imp_ngrams.R")
 source("./functions/train_models.R")
+source("./functions/cdhit_data.R")
+source("./functions/raw_data.R")
 source("./functions/calculate_statistics.R")
-source("functions/publication_functions.R")
+source("./functions/publication_functions.R")
+source("./funtions/benchmark_functions")
 
 
 if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {
@@ -53,7 +56,33 @@ publication_results <- drake_plan(
   aa_comp_plot = get_aa_comp_plot(datasets = list("ACP" = c(pos_train_main, pos_test_main), 
                                                   "AMP" = c(neg_train_main, neg_test_main), 
                                                   "Negative" = c(neg_train_alt, neg_test_alt))),
-  ngram_list = get_ngram_list(imp_ngrams_dat)
+  ngram_list = get_ngram_list(imp_ngrams_dat),
+  gathered_acp_independent = gather_raw_data(),
+  raw_acp_independent = read_raw_data("./data/all_ACPs.fasta"),
+  cdhit_acp_independent = filter_cdhit(raw_acp_independent, 0.95),
+  raw_amp_independent = read_amp_data(),
+  cdhit_amp_independent = filter_cdhit(raw_amp_independent, 0.60),
+  acp_independent = cdhit_acp_independent[which(!(cdhit_acp_independent %in% c(pos_train_main, pos_test_main, neg_train_main, neg_test_main,
+                                                      neg_train_alt, neg_test_alt)))],
+  amp_independent = cdhit_amp_independent[which(!(cdhit_amp_independent %in% c(pos_train_main, pos_test_main, neg_train_main, neg_test_main,
+                                                      neg_train_alt, neg_test_alt)))],
+  independent_dataset = write_fasta(c(acp_independent, amp_independent), "./results/independent_dataset_for_anticp_benchmark.fa"),
+  independent_dataset_results = get_independent_dataset_preds(c(acp_independent, amp_independent),
+                                                              "./results/anticp_model1_validation.csv"),
+  mACPpred_benchmark_results = get_validation_mACPpred_dataset_preds(pos_mACPpred_dataset = "data/mACPpred_positive.fasta", 
+                                                                     neg_mACPpred_dataset = "data/mACPpred_negative.fasta", 
+                                                                     pos_validation = pos_test_main, 
+                                                                     neg_validation = neg_test_main, 
+                                                                     cancergram_preds = benchmark_peptide_preds, 
+                                                                     mACPpred_preds = "results/mACPpred_predictions_validation.csv"),
+  peptide_aa_comp = get_peptide_aa_comp(datasets = list("ACP" = c(pos_train_main, pos_test_main), 
+                                                        "AMP" = c(neg_train_main, neg_test_main), 
+                                                        "Negative" = c(neg_train_alt, neg_test_alt))),
+  aa_comp_table_acp_amp = test_aa_comp(peptide_aa_comp, "ACP", "AMP"),
+  aa_comp_table_acp_neg = test_aa_comp(peptide_aa_comp, "ACP", "Negative"),
+  aa_comp_table_amp_neg = test_aa_comp(peptide_aa_comp, "AMP", "Negative"),
+  anticp_benchmark_table = get_benchmark_results_table(independent_dataset_results, "AntiCP"),
+  mACPpred_benchmark_table = get_benchmark_results_table(mACPpred_benchmark_results, "mACPpred")
 )
 
 make(publication_results, seed = 2938, cache = new_cache("publication_cache"))

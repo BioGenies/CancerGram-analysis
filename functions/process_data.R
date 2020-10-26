@@ -19,8 +19,8 @@ process_sequences <- function(seq_file) {
 #' @return input data frame with additional column indicating the target name
 get_target <- function(df) {
   mutate(df,
-         target = factor(case_when(grepl("pos_train_main|pos_test_main", source_peptide) ~ "acp",
-                                   grepl("neg_train_main|neg_test_main", source_peptide) ~ "amp",
+         target = factor(case_when(grepl("pos_train_main|pos_test_main|CancerPPD|AP|DRAMP", source_peptide) ~ "acp",
+                                   grepl("neg_train_main|neg_test_main|dbAMP", source_peptide) ~ "amp",
                                    grepl("neg_train_alternate|neg_test_alternate", source_peptide) ~ "neg")))
 }
 

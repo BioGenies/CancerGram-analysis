@@ -173,11 +173,11 @@ get_cv_plot <- function(cv_perf) {
 get_aa_comp_plot <- function(datasets) {
   
   res <- lapply(names(datasets), function(ith_dataset) {
-  aac <- data.frame(table(unlist(datasets[ith_dataset]))) %>% 
-    setNames(c("Amino acid", "Frequency")) 
-  mutate(aac, 
-         Frequency = Frequency/sum(Frequency),
-         Dataset = ith_dataset)
+    aac <- data.frame(table(unlist(datasets[ith_dataset]))) %>% 
+      setNames(c("Amino acid", "Frequency")) 
+    mutate(aac, 
+           Frequency = Frequency/sum(Frequency),
+           Dataset = ith_dataset)
   }) %>% bind_rows() 
   
   p <- ggplot(res, aes(x = `Amino acid`, y = Frequency, fill = Dataset)) +
@@ -186,6 +186,60 @@ get_aa_comp_plot <- function(datasets) {
     theme_bw() +
     theme(legend.position = "bottom")
   ggsave(plot = p, filename = paste0(data_path, "aa_comp_plot.eps"), device = cairo_ps, height = 5, width = 9)
+}
+
+
+get_peptide_aa_comp <- function(datasets) {
+  comp <- lapply(names(datasets), function(ith_dataset) {
+    lapply(names(datasets[[ith_dataset]]), function(ith_prot) {
+      aac <- data.frame(table(factor(unlist(datasets[[ith_dataset]][[ith_prot]]), 
+                                     levels = c("A", "C", "D", "E", "F", "G", "H", 
+                                                "I", "K", "L", "M", "N", "P", "Q", 
+                                                "R", "S", "T", "V", "W", "Y")))) %>% 
+        setNames(c("Amino acid", "Frequency")) 
+      mutate(aac, 
+             Frequency = Frequency/sum(Frequency),
+             Dataset = ith_dataset)
+    }) %>% bind_rows()
+  }) %>% bind_rows() 
+}
+
+test_aa_comp <- function(peptide_aa_comp, dataset1, dataset2) {
+  test_res <- lapply(unique(peptide_aa_comp[["Amino acid"]]), function(ith_aa) {
+    data.frame(aa = ith_aa,
+               pval = wilcox.test(x = filter(comp, `Amino acid` == ith_aa, Dataset == dataset1)[["Frequency"]],
+                                  y = filter(comp, `Amino acid` == ith_aa, Dataset == dataset2)[["Frequency"]],
+                                  correct = FALSE)[["p.value"]],
+               mean1 = round(mean(filter(comp, `Amino acid` == ith_aa, Dataset == dataset1)[["Frequency"]])*100, 2),
+               mean2 = round(mean(filter(comp, `Amino acid` == ith_aa, Dataset == dataset2)[["Frequency"]])*100, 2),
+               median1 = round(median(filter(comp, `Amino acid` == ith_aa, Dataset == dataset1)[["Frequency"]])*100, 2),
+               median2 = round(median(filter(comp, `Amino acid` == ith_aa, Dataset == dataset2)[["Frequency"]])*100, 2)) %>% 
+      setNames(c("Amino acid", "pvalue", paste0(dataset1, " mean frequency [%]"), paste0(dataset2, " mean frequency [%]"),
+                 paste0(dataset1, " median frequency [%]"), paste0(dataset2, " median frequency [%]")))
+  }) %>% bind_rows() 
+  
+  res <- mutate(test_res,
+         "Adjusted p-value" = p.adjust(pvalue, "BH")) %>% 
+    select(-pvalue)
+  
+  write.csv(res, paste0(data_path, "aa_comp_table_", dataset1, "_", dataset2, ".csv"), row.names = FALSE)
+  xtable(res, caption = "", label = "", align = "ccccccc") %>% 
+    print(include.rownames = FALSE, booktabs = TRUE,
+          caption.placement = "top", label.placement = "top") %>% 
+    writeLines(paste0(data_path, "aa_comp_table_", dataset1, "_", dataset2, ".txt"))
+}
+
+
+get_benchmark_results_table <- function(benchmark_res, software) {
+  if(software == "anticp") {
+    benchmark_res <- arrange(benchmark_res, desc(Software))
+  }
+  write.csv(benchmark_res, paste0(data_path, "benchmark_results_", software, ".csv"))
+  benchmark_res %>% 
+    xtable(., caption = "", label = "", align = "ccc") %>% 
+    print(include.rownames = FALSE, booktabs = TRUE,
+          caption.placement = "top", label.placement = "top") %>% 
+    writeLines(paste0(data_path, "benchmark_results_", software, ".txt"))
 }
 
 
