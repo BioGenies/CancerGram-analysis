@@ -227,7 +227,7 @@ test_aa_comp <- function(peptide_aa_comp, dataset1, dataset2) {
          digits = rep(2, 7),
          display = c("f", "s", rep("f", 4), "E")) %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
-          caption.placement = "top", label.placement = "top") #%>% 
+          caption.placement = "top", label.placement = "top") %>% 
     writeLines(paste0(data_path, "aa_comp_table_", dataset1, "_", dataset2, ".txt"))
 }
 
