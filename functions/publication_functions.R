@@ -223,9 +223,11 @@ test_aa_comp <- function(peptide_aa_comp, dataset1, dataset2) {
     select(-pvalue)
   
   write.csv(res, paste0(data_path, "aa_comp_table_", dataset1, "_", dataset2, ".csv"), row.names = FALSE)
-  xtable(res, caption = "", label = "", align = "ccccccc") %>% 
+  xtable(res, caption = "", label = "", align = "ccccccc",
+         digits = rep(2, 7),
+         display = c("f", "s", rep("f", 4), "E")) %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
-          caption.placement = "top", label.placement = "top") %>% 
+          caption.placement = "top", label.placement = "top") #%>% 
     writeLines(paste0(data_path, "aa_comp_table_", dataset1, "_", dataset2, ".txt"))
 }
 
@@ -236,7 +238,7 @@ get_benchmark_results_table <- function(benchmark_res, software) {
   }
   write.csv(benchmark_res, paste0(data_path, "benchmark_results_", software, ".csv"))
   benchmark_res %>% 
-    xtable(., caption = "", label = "", align = "ccc") %>% 
+    xtable(., caption = "", label = "", align = "cccccccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
           caption.placement = "top", label.placement = "top") %>% 
     writeLines(paste0(data_path, "benchmark_results_", software, ".txt"))
