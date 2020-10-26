@@ -20,8 +20,9 @@ source("./functions/train_models.R")
 source("./functions/cdhit_data.R")
 source("./functions/raw_data.R")
 source("./functions/calculate_statistics.R")
+source("./functions/process_data.R")
 source("./functions/publication_functions.R")
-source("./funtions/benchmark_functions")
+source("./functions/benchmark_functions.R")
 
 
 if(Sys.info()[["nodename"]] %in% c("kasia-MACH-WX9", "ryzen")) {

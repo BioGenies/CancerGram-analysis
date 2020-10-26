@@ -207,13 +207,13 @@ get_peptide_aa_comp <- function(datasets) {
 test_aa_comp <- function(peptide_aa_comp, dataset1, dataset2) {
   test_res <- lapply(unique(peptide_aa_comp[["Amino acid"]]), function(ith_aa) {
     data.frame(aa = ith_aa,
-               pval = wilcox.test(x = filter(comp, `Amino acid` == ith_aa, Dataset == dataset1)[["Frequency"]],
-                                  y = filter(comp, `Amino acid` == ith_aa, Dataset == dataset2)[["Frequency"]],
+               pval = wilcox.test(x = filter(peptide_aa_comp, `Amino acid` == ith_aa, Dataset == dataset1)[["Frequency"]],
+                                  y = filter(peptide_aa_comp, `Amino acid` == ith_aa, Dataset == dataset2)[["Frequency"]],
                                   correct = FALSE)[["p.value"]],
-               mean1 = round(mean(filter(comp, `Amino acid` == ith_aa, Dataset == dataset1)[["Frequency"]])*100, 2),
-               mean2 = round(mean(filter(comp, `Amino acid` == ith_aa, Dataset == dataset2)[["Frequency"]])*100, 2),
-               median1 = round(median(filter(comp, `Amino acid` == ith_aa, Dataset == dataset1)[["Frequency"]])*100, 2),
-               median2 = round(median(filter(comp, `Amino acid` == ith_aa, Dataset == dataset2)[["Frequency"]])*100, 2)) %>% 
+               mean1 = round(mean(filter(peptide_aa_comp, `Amino acid` == ith_aa, Dataset == dataset1)[["Frequency"]])*100, 2),
+               mean2 = round(mean(filter(peptide_aa_comp, `Amino acid` == ith_aa, Dataset == dataset2)[["Frequency"]])*100, 2),
+               median1 = round(median(filter(peptide_aa_comp, `Amino acid` == ith_aa, Dataset == dataset1)[["Frequency"]])*100, 2),
+               median2 = round(median(filter(peptide_aa_comp, `Amino acid` == ith_aa, Dataset == dataset2)[["Frequency"]])*100, 2)) %>% 
       setNames(c("Amino acid", "pvalue", paste0(dataset1, " mean frequency [%]"), paste0(dataset2, " mean frequency [%]"),
                  paste0(dataset1, " median frequency [%]"), paste0(dataset2, " median frequency [%]")))
   }) %>% bind_rows() 
