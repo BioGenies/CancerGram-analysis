@@ -28,17 +28,20 @@ Data used in the main analysis:
 
 Data used for the publication results:
 
-* **mito_ACPs.fasta** - sequences of 11 mitochondrial ACPs not included in the training datasets and used to evaluate CancerGram performance.
-* **mitochondrial_ACPs_table.csv** - table containing names and sequences of 11 mitochondrial ACPs mentioned above with their sources.
-
-Data used in the exploratory analysis:
-
+* **mito_ACPs.fasta** - sequences of 12 mitochondrial ACPs not included in the training datasets and used to evaluate CancerGram performance.
+* **mitochondrial_ACPs_table.csv** - table containing names and sequences of 12 mitochondrial ACPs mentioned above with their sources.
 * **DRAMP_Anticancer_amps.csv** - data on anticancer AMPs downloaded from the [DRAMP database](http://dramp.cpu-bioinfor.org/).
 * **DRAMP_Antitumor_amps.csv*** - data on antitumor AMPs downloaded from the [DRAMP database](http://dramp.cpu-bioinfor.org/).
 * **all_ACPs.fasta** - sequences of ACPs combined from different sources (DRAMP, APD, and CancerPPD databases).
-* **apd_df.csv** - data downloaded from the APD database.
+* **apd_df.csv** - data downloaded from the [APD3 database](http://aps.unmc.edu/AP/main.php).
 * **cancerppd_l_natural.txt** - sequences of anticancer peptides downloaded from the [CancerPPD database](http://crdd.osdd.net/raghava/cancerppd/downseq.php).
 * **dbamp_df.csv** - data downloaded from the [dbAMP database](http://140.138.77.240/~dbamp/).
+* **mACPpred_negative.fasta** - negative dataset used for mACPpred training, acquired from http://thegleelab.org/mACPpred/ACPData.html on 26.10.2020
+* **mACPpred_positive.fasta** - positive dataset used for mACPpred training, acquired from http://thegleelab.org/mACPpred/ACPData.html on 26.10.2020
+* **pos_test_main_without_mACPpred.fasta** - ACP validation dataset after removal of peptides used for mACPpred training
+
+Data used in the exploratory analysis:
+
 * **pos_test_alternate.txt** - ACP sequences from the alternative validation dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153)
 * **pos_train_alternate.txt** - ACP sequences from the alternative training dataset, acquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153)
 
@@ -54,8 +57,9 @@ Report summing up the results obtained with the first models.
 ### results
 
 * **CancerGram_model.rda** - object containing CancerGram stacked random forest model and important features
-* **benchmark.fasta** - sequences used as a benchmark dataset in the exploratory analysis.
-* **benchmark_mc.fasta** - sequences used as a benchmark dataset for multiclass model in the exploratory analysis.
+* **independent_anticp_local_model1_0.5.csv** - prediction results on the independent dataset obtained with AntiCP 2.0 local version (downloaded from https://github.com/raghavagps/anticp2/ on 26.10.2020) with model 1, SVM cut-off set to 0.5 (default) and window length set to 10 (default)
+* **independent_dataset_for_anticp_benchmark.fa** - independent dataset used for benchmarking CancerGram with AntiCP 2.0. Dataset was constructed using experimentally verified ACP sequences downloaded from [DRAMP database](http://dramp.cpu-bioinfor.org/), [CancerPPD database](http://crdd.osdd.net/raghava/cancerppd/downseq.php) and [APD3 database](http://aps.unmc.edu/AP/main.php), as well as experimentally verified AMPs from [dbAMP database](http://140.138.77.240/~dbamp/). To reduce homology of both datasets, we used CD-HIT with identity cut-off 0.95 and 0.6 for ACPs and AMPs respectively. Next, we removed sequences present in the training and validation datasets aquired from [Agrawal et al.](https://doi.org/10.1093/bib/bbaa153) that were used for training CancerGram and/or AntiCP 2.0, obtaining 57 ACPs and 769 AMPs. 
+* **mACPpred_predictions_validation.csv** - prediction results on the ACP and AMP validation dataset, from which we removed sequences used for mACPpred training, obtaining 128 ACPs and 170 AMPs. 
 
 ### data_exploration
 
