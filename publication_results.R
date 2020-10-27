@@ -69,7 +69,7 @@ publication_results <- drake_plan(
                                                       neg_train_alt, neg_test_alt)))],
   independent_dataset = write_fasta(c(acp_independent, amp_independent), "./results/independent_dataset_for_anticp_benchmark.fa"),
   independent_dataset_results = get_independent_dataset_preds(c(acp_independent, amp_independent),
-                                                              "./results/anticp_model1_validation.csv"),
+                                                              "./results/independent_anticp_local_model1_0.5.csv"),
   mACPpred_benchmark_results = get_validation_mACPpred_dataset_preds(pos_mACPpred_dataset = "data/mACPpred_positive.fasta", 
                                                                      neg_mACPpred_dataset = "data/mACPpred_negative.fasta", 
                                                                      pos_validation = pos_test_main, 

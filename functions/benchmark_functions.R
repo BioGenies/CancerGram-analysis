@@ -3,7 +3,7 @@ get_independent_dataset_preds <- function(dataset, anticp_preds_file) {
 anticp_res <- read.csv(anticp_preds_file, stringsAsFactors = FALSE)  %>% 
   mutate(Decision = factor(ifelse(Prediction == "AntiCP", "acp", "amp")),
          Software = "AntiCP 2.0") %>%
-  select(c(ID, Score, Decision, Software)) %>% 
+  select(c(`X..Sequence_ID`, Score, Decision, Software)) %>% 
   setNames(c("source_peptide", "Prob", "Decision", "Software")) %>% 
   get_target() %>% 
   mutate(target = factor(ifelse(target == "acp", "acp", "amp")))

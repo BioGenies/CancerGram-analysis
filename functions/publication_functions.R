@@ -233,10 +233,10 @@ test_aa_comp <- function(peptide_aa_comp, dataset1, dataset2) {
 
 
 get_benchmark_results_table <- function(benchmark_res, software) {
-  if(software == "anticp") {
+  if(software == "AntiCP") {
     benchmark_res <- arrange(benchmark_res, desc(Software))
   }
-  write.csv(benchmark_res, paste0(data_path, "benchmark_results_", software, ".csv"))
+  write.csv(benchmark_res, paste0(data_path, "benchmark_results_", software, ".csv"), row.names = FALSE)
   benchmark_res %>% 
     xtable(., caption = "", label = "", align = "cccccccc") %>% 
     print(include.rownames = FALSE, booktabs = TRUE,
