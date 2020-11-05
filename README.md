@@ -1,9 +1,8 @@
-# Read me
+[![published in: Pharmaceutics](https://img.shields.io/badge/published%20in-Pharmaceutics-green.svg)](https://doi.org/10.3390/pharmaceutics12111045)
 
-This repository contains data and code necessary to reproduce analysis from the article: Burdukiewicz, M., Sidorczuk, K., Rafacz, D., Pietluch, F., Bakala, M., Slowik, J. and Gagat, P. CancerGram: an effective classifier for differentiating anticancer from antimicrobial peptides.
+This repository contains data and code necessary to reproduce analysis from the article: Burdukiewicz, M., Sidorczuk, K., Rafacz, D., Pietluch, F., Bąkała, M., Słowik, J., and Gagat, P. (2020). CancerGram: An Effective Classifier for Differentiating Anticancer from Antimicrobial Peptides. Pharmaceutics 12, 1045, https://doi.org/10.3390/pharmaceutics12111045.
 
-The analysis conducted in this article resulted in a predictor of anticancer peptides CancerGram, available as a *R* package and a web server (http://biongram.biotech.uni.wroc.pl/CancerGram/).
-
+The analysis conducted in this article resulted in a predictor of anticancer peptides CancerGram, available as a [*R* package](https://github.com/BioGenies/CancerGram) and a web server (http://biongram.biotech.uni.wroc.pl/CancerGram/).
 
 ## How to reproduce the main part of the analysis?
 
